@@ -80,7 +80,7 @@ props.name = function (pv) {
 
 ## メソッドを指定
 
-プレイベート変数をひとつ引数に持つ高次関数を設定します
+プレイベート変数をひとつ引数に持つ高階関数を設定します
 
 ```js
 var def = require('cocotte-define');
