@@ -1,0 +1,23 @@
+{
+  "name": "cocotte-define",
+  "description": "クラス定義のヘルパー",
+  "homepage": "https://github.com/yukik",
+  "keywords": [
+    "tools", "class"
+  ],
+  "author": "Yuki Kurata <yuki.kurata@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/yukik/cocotte-define.git"
+  },
+  "main": "define.js",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "node ./test/test.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "readmeFilename": "README.md",
+  "license": "MIT"
+}
