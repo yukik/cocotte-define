@@ -106,7 +106,7 @@ meths.setName = function (pv) {
 
 var k = new Klass();
 
-メソッドの実行
+// メソッドの実行
 k.setName('foo');
 ```
 
