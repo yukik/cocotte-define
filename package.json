@@ -3,7 +3,8 @@
   "description": "クラス定義のヘルパー",
   "homepage": "https://github.com/yukik",
   "keywords": [
-    "tools", "class"
+    "tools",
+    "class"
   ],
   "author": "Yuki Kurata <yuki.kurata@gmail.com>",
   "repository": {
@@ -16,8 +17,11 @@
     "test": "node ./test/test.js"
   },
   "directories": {
+    "example": "example",
     "test": "test"
   },
-  "readmeFilename": "README.md",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yukik/cocotte-define/issues"
+  }
 }
