@@ -130,3 +130,14 @@ meths.setName = function (pv) {
 	};
 };
 ```
+
+## すべてのプロパティを取得
+
+インスタンスをそのまま`console.log`などで標準出力すると
+`{ name: [Getter/Setter]}`と表示されて値を一括で確認する事はできません。
+そこで、`value`プロパティが自動的にインスタンスに追加されています。
+
+```
+console.log(k.value);
+```
+
