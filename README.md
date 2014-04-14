@@ -3,11 +3,19 @@ cocotte-define
 
 クラス定義のヘルパー
 
+# はじめに
+
+javascriptでクラスを定義することを簡単かつ安全に行うためのヘルパーです。
+プライベート変数と継承の同時に実装すると煩雑になりやすいですが、
+ヘルパー関数を使用する事で保守しやすくなります。
+
 #機能
 
  + 簡易の型チェック
  + Getter/Setterの設定
+ + メソッドの引数の型チェック
  + プライベート変数
+ + 継承
  + プロパティのすべての値の一括取得
 
 #使用方法
@@ -18,42 +26,28 @@ cocotte-define
 
 
 ##プロパティの簡易な型指定
+第２引数にプロパティの定義をします
+`{type: 型}`を設定することで、自動的に型チェックを行うGetter/Setterがプロパティに設定されます
 
-{type: 型のコンストラクタを指定}を設定することで、
-自動的に型チェックを行うGetter/Setterがプロパティに設定されます
-
-
-```js
+```js:js
 var def = require('cocotte-define');
 
-// ------------- クラス定義
-
 var Klass = function Klass() {
-	// プロパティ定義を行う
 	def(this, props);
 };
-
-// プロパティ定義
 var props = {};
-
-// プロパティ定義の例
 props.name = {type: String};
 
-// ------------- ユーザーコード
-
 var k = new Klass();
-
-// 値の設定
 k.name = 'foo';
-// k.name = 123; // 例外発生
-
 ```
+
 
 ## 初期値を持った定義
 
 `value`を定義します
 
-```js
+```js:js
 props.name = {type: String, value: 'foo'};
 ```
 
@@ -64,7 +58,7 @@ props.name = {type: String, value: 'foo'};
 valueは初期値に設定されます
 いずれも省略する事が出来ます
 
-```js
+```js:js
 props.name = function (pv) {
 	return {
 		value: 'foo',
@@ -80,33 +74,23 @@ props.name = function (pv) {
 
 ## メソッドを指定
 
-プレイベート変数をひとつ引数に持つ高階関数を設定します
+第３引数にメソッドの定義をします
+オブジェクトに対し、プレイベート変数をひとつ引数に持つ高階関数をメソッド名で追加します
 
-```js
+```js:js
 var def = require('cocotte-define');
 
-// ------------- クラス定義
-
 var Klass = function Klass() {
-	// プロパティ定義を行う
 	def(this, null, meths);
 };
-
-// メソッド定義
 var meths = {};
-
-// メソッド定義の例
 meths.setName = function (pv) {
 	return function (val) {
 		pv.name = val;
 	};
 };
 
-// ------------- ユーザーコード
-
 var k = new Klass();
-
-// メソッドの実行
 k.setName('foo');
 ```
 
@@ -120,7 +104,7 @@ k.setName('foo');
 
 引数は省略可能です。
 
-```
+```js:js
 meths.setName = function (pv) {
 	return {
 		params: [String],
@@ -131,13 +115,72 @@ meths.setName = function (pv) {
 };
 ```
 
+## コンストラクタに初期値を渡す
+
+初期値をインスタンス作成時に設定するには、第４引数にオブジェクトを設定します
+`{name:'foo'}`を設定した場合は、`this.name = 'foo'`が自動的に行われます
+
+```js:js
+var Klass = function Klass(config) {
+	def(this, props, null, config);
+};
+var props = {};
+props.name = {type: String};
+
+var k = new Klass({name: 'foo'});
+console.log(k.name); // foo 
+```
+
+## プライベート変数を外部から操作する
+
+通常プライベート変数は、コンストラクタで作成されたものを使用するため
+外部から操作する事ができません。
+
+しかし、第５引数に設定することで可能になります。
+
+```js:js
+var Klass = function Klass(pv) {
+	def(this, props, null, null, pv);
+};
+var props = {};
+props.name = {type: String};
+
+var pv = {}; // プライベート変数を格納するオブジェクト
+var k = new Klass(pv);
+k.name = 'foo';
+console.log(pv.name); // foo 
+```
+
+## 継承
+
+第６引数に親クラスを設定します
+このライブラリを使用する親クラスのコンストラクタは、
+第１引数に初期値、第２引数にプライベート変数とする必要があります。
+
+```js:js
+var SuperKlass = function SuperKlass (config, pv) {
+	def (this, superProps, null, config, pv);
+};
+var superProps = {};
+superProps.prop1 = {type: String};
+
+var Klass = function Klass (config) {
+	def (this, props, null, config, null, SuperKlass);
+};
+var props = {};
+props.prop2 = {type: String};
+
+var k = new Klass({prop1: 'foo'});
+console.log(k.prop1); // 'foo'
+```
+
 ## すべてのプロパティを取得
 
 インスタンスをそのまま`console.log`などで標準出力すると
 `{ name: [Getter/Setter]}`と表示されて値を一括で確認する事はできません。
 そこで、`value`プロパティが自動的にインスタンスに追加されています。
+valueは親クラスのプロパティも確認することができます。
 
-```
+```js:js
 console.log(k.value);
 ```
-
