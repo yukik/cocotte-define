@@ -54,25 +54,14 @@ meths.setProp2 = function (pv) {
 	};
 };
 
-Klass.prototype.getName = function () {
-	return this.name1 + this.name;
-};
-
-meths.getPv = function (pv) {
-	return function () {
-		return pv;
-	};
-};
-
 // ------------- ユーザーコード
 
-var k = new Klass({name1: 'yuki'});
-k.setName('foo');
-console.log(k.getName());
+var k = new Klass({prop2: 'foo'});
+k.setProp1('bar');
 console.log(k.value);
 
-var k2 = new Klass({name1: 'miki'});
-k2.setName('baz');
+var k2 = new Klass({prop1: 'baz'});
+k2.setProp2('qux');
 console.log(k2.value);
 
 
