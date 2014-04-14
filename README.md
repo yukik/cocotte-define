@@ -29,7 +29,7 @@ javascriptでクラスを定義することを簡単かつ安全に行うため�
 第２引数にプロパティの定義をします
 `{type: 型}`を設定することで、自動的に型チェックを行うGetter/Setterがプロパティに設定されます
 
-```js:js
+```javascript
 var def = require('cocotte-define');
 
 var Klass = function Klass() {
@@ -47,7 +47,7 @@ k.name = 'foo';
 
 `value`を定義します
 
-```js:js
+```javascript
 props.name = {type: String, value: 'foo'};
 ```
 
@@ -58,7 +58,7 @@ props.name = {type: String, value: 'foo'};
 valueは初期値に設定されます
 いずれも省略する事が出来ます
 
-```js:js
+```javascript
 props.name = function (pv) {
 	return {
 		value: 'foo',
@@ -77,7 +77,7 @@ props.name = function (pv) {
 第３引数にメソッドの定義をします
 オブジェクトに対し、プレイベート変数をひとつ引数に持つ高階関数をメソッド名で追加します
 
-```js:js
+```javascript
 var def = require('cocotte-define');
 
 var Klass = function Klass() {
@@ -104,7 +104,7 @@ k.setName('foo');
 
 引数は省略可能です。
 
-```js:js
+```javascript
 meths.setName = function (pv) {
 	return {
 		params: [String],
@@ -120,7 +120,7 @@ meths.setName = function (pv) {
 初期値をインスタンス作成時に設定するには、第４引数にオブジェクトを設定します
 `{name:'foo'}`を設定した場合は、`this.name = 'foo'`が自動的に行われます
 
-```js:js
+```javascript
 var Klass = function Klass(config) {
 	def(this, props, null, config);
 };
@@ -138,7 +138,7 @@ console.log(k.name); // foo
 
 しかし、第５引数に設定することで可能になります。
 
-```js:js
+```javascript
 var Klass = function Klass(pv) {
 	def(this, props, null, null, pv);
 };
@@ -157,7 +157,7 @@ console.log(pv.name); // foo
 このライブラリを使用する親クラスのコンストラクタは、
 第１引数に初期値、第２引数にプライベート変数とする必要があります。
 
-```js:js
+```javascript
 var SuperKlass = function SuperKlass (config, pv) {
 	def (this, superProps, null, config, pv);
 };
@@ -181,6 +181,6 @@ console.log(k.prop1); // 'foo'
 そこで、`value`プロパティが自動的にインスタンスに追加されています。
 valueは親クラスのプロパティも確認することができます。
 
-```js:js
+```javascript
 console.log(k.value);
 ```
