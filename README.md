@@ -78,8 +78,6 @@ props.name = function (pv) {
 オブジェクトに対し、プレイベート変数をひとつ引数に持つ高階関数をメソッド名で追加します
 
 ```javascript
-var def = require('cocotte-define');
-
 var Klass = function Klass() {
 	def(this, null, meths);
 };
