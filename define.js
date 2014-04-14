@@ -1,3 +1,5 @@
+/*jshint maxparams:6*/
+
 'use strict';
 
 /**
@@ -167,20 +169,40 @@ var method = function method (methodName, def) {
  * @param  {Object} props    プロパティ定義
  * @param  {Object} meths    メソッド定義
  */
-var cocotteDefine = function cocotteDefine (instance, props, meths) {
-	var pv = {};
-	if (props) {
-		var gettable = defineProperties(instance, props, pv);
+var cocotteDefine = function cocotteDefine (instance, props, meths, config, pv, SuperClass) {
 
-		// instance.valueでプロパティのすべての値を取得
-		Object.defineProperty (instance, 'value', {
-			enumerable: true,
-			get: function (){
-				var v = {};
-				gettable.forEach(function(p){
-					v[p] = instance[p];
-				});
-				return v;
+	// 初期値
+	config = config || {};
+
+	// プライベート変数
+	pv = pv || {};
+
+	// 継承
+	if (SuperClass) {
+		instance.__proto__.__proto__ = new SuperClass(config, pv);
+	}
+
+	if (!pv.value) {
+		pv.value = [];
+	}
+
+	// 取得可能プロパティ
+	var gettable = [].concat(pv.value);
+
+	// プロパティの設定
+	if (props) {
+		var g = defineProperties(instance, props, pv);
+		g.forEach(function(p){
+			if (!~gettable.indexOf(p)) {
+				pv.value.push(p);
+				gettable.push(p);
+			}
+		});
+
+		// 値の設定
+		Object.keys(config).forEach(function(k){
+			if (props[k]) {
+				instance[k] = config[k];
 			}
 		});
 	}
@@ -189,7 +211,25 @@ var cocotteDefine = function cocotteDefine (instance, props, meths) {
 		defineMethods(instance, meths, pv);
 	}
 
+
+	// instance.valueでプロパティのすべての値を取得
+	Object.defineProperty (instance, 'value', {
+		enumerable: true,
+		get: valueGetter(instance, gettable)
+	});
+
 	return cocotteDefine;
+};
+
+
+var valueGetter = function (instance, gettable) {
+	return function () {
+		var v = {};
+		gettable.forEach(function(p){
+			v[p] = instance[p];
+		});
+		return v;
+	};
 };
 
 module.exports = exports = cocotteDefine;
