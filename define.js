@@ -171,6 +171,11 @@ var method = function method (methodName, def) {
  */
 var cocotteDefine = function cocotteDefine (instance, props, meths, config, pv, SuperClass) {
 
+	// new チェック
+	if (instance === global || instance === undefined) {
+		throw new Error('newを付加しないでコンストラクタを実行してはいけません');
+	}
+
 	// 初期値
 	config = config || {};
 
