@@ -5,14 +5,13 @@
  * 定義します
  */
 
-
 var def = require('cocotte-define');
 
 // ------------- クラス定義
 
 var Klass = function Klass() {
-	// プロパティ定義を行う
-	def(this, null, meths);
+  // プロパティ定義を行う
+  def(this, null, meths);
 };
 
 // メソッド定義
@@ -20,16 +19,16 @@ var meths = {};
 
 // プロパティ定義の例
 meths.setName = function (pv) {
-	return function (val) {
-		pv.name = val;
-	};
+  return function (val) {
+    pv.name = val;
+  };
 };
 
 // プロパティ定義の例
 meths.getName = function (pv) {
-	return function () {
-		return pv.name;
-	};
+  return function () {
+    return pv.name;
+  };
 };
 
 // ------------- ユーザーコード

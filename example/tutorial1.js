@@ -17,8 +17,8 @@ var def = require('../define');
 // ------------- クラス定義
 
 var Klass = function Klass() {
-	// プロパティ定義を行う
-	def(this, props);
+  // プロパティ定義を行う
+  def(this, props);
 };
 
 // プロパティ定義

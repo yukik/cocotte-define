@@ -78,14 +78,9 @@ k.str1 = 'bar';
 
 assert(k.str1 === 'bar');
 
-var err = null;
-try {
-	k.str1 = 123;
-} catch (e) {
-	err = e;
-}
-
-assert(err);
+assert.throws(function(){
+  k.str1 = 123;
+}, TypeError);
 
 assert(k.str2 === 'hoge');
 
@@ -93,14 +88,9 @@ k.str2 = 'piyo';
 
 assert(k.str2 === 'piyo');
 
-err = null;
-try {
-	k.str2 = 123;
-} catch (e) {
-	err = e;
-}
-assert(err);
-
+assert.throws(function(){
+  k.str2 = 123;
+}, TypeError);
 
 // TODO 続きは後日
 

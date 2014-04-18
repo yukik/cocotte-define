@@ -15,8 +15,8 @@ var def = require('../define');
 // ------------- クラス定義
 
 var Klass = function Klass() {
-	// プロパティ定義を行う
-	def(this, props);
+  // プロパティ定義を行う
+  def(this, props);
 };
 
 // プロパティ定義
@@ -24,15 +24,15 @@ var props = {};
 
 // プロパティ定義の例
 props.name = function (pv) {
-	return {
-		value: 'foo',
-		getter: function () {
-			return pv.name;
-		},
-		setter: function (value) {
-			pv.name = value;
-		}
-	};
+  return {
+    value: 'foo',
+    getter: function () {
+      return pv.name;
+    },
+    setter: function (value) {
+      pv.name = value;
+    }
+  };
 };
 
 // ------------- ユーザーコード
