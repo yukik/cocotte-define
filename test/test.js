@@ -4,71 +4,68 @@ var def = require('../define');
 
 var assert = require('assert');
 
-var props = {};
-var meths = {};
+var Klass = function Klass (str1, num1) {
+  this.def(Klass);
+  this.str1 = str1;
+  this.num1 = num1;
+};
+def(Klass);
 
+Klass.properties = {
+  str1: {type: String},
 
-var Klass = function Klass (config) {
-	def(this, props, meths);
+  str2: function (pv) {
+    return {
+      getter: function () {
+        return pv.str2 || null;
+      },
+      setter: function (val) {
+        if (val === null || val === void 0 || typeof val === 'string') {
+          pv.str2 = val;
+        } else {
+          throw new TypeError('引数が文字列ではありません');
+        }
+      }
+    };
+  },
 
-	this.str1 = config.str1;
-	this.num1 = config.num1;
+  num1: {type: Number},
+
+  num2: function (pv) {
+    return {
+      getter: function () {
+        return pv.num2;
+      },
+      setter: function (val) {
+        if (1 <= val && val <= 100) {
+          pv.num2 = val;
+        } else {
+          throw new TypeError('1から100までの数字を設定してください');
+        }
+      }
+    };
+  }
 };
 
-props.str1 = {type: String, value: 'def'};
+Klass.methods = {
 
-props.str2 = function (pv) {
-	return {
-		value: 'hoge',
-		getter: function () {
-			return pv.str2;
-		},
-		setter: function (val) {
-			if (val === null || val === void 0 || val.constructor === String) {
-				pv.str2 = val;
-			} else {
-				throw new TypeError('引数が文字列ではありません');
-			}
-		}
-	};
+  m1: function (pv) {
+    return function (val) {
+      this.num1 = pv.num1 ? pv.num1 + val : val;
+    };
+  },
+
+  m2: function (pv) {
+    return {
+      params: [Number],
+      method: function (val) {
+        this.num2 = pv.num2 ? pv.num2 + val : val;
+      }
+    };
+  }
 };
 
-props.num1 = {type: Number, value: 100};
-
-props.num2 = function (pv) {
-	return {
-		getter: function () {
-			return pv.num2;
-		},
-		setter: function (val) {
-			if (1 <= val && val <= 100) {
-				pv.num2 = val;
-			} else {
-				throw new TypeError('1から100までの数字を設定してください');
-			}
-		}
-	};
-};
-
-
-meths.m1 = function (pv) {
-	return function (val) {
-		this.num1 = pv.num1 ? pv.num1 + val : val;
-	};
-};
-
-meths.m2 = function (pv) {
-	return {
-		params: [Number],
-		method: function (val) {
-			this.num2 = pv.num2 ? pv.num2 + val : val;
-		}
-	};
-};
-
-
-var config = {str1: 'foo', num1: 10};
-var k = new Klass(config);
+var k = new Klass('foo', 10);
 
 // --- test
 
@@ -82,7 +79,7 @@ assert.throws(function(){
   k.str1 = 123;
 }, TypeError);
 
-assert(k.str2 === 'hoge');
+assert(k.str2 === null);
 
 k.str2 = 'piyo';
 
@@ -95,12 +92,3 @@ assert.throws(function(){
 // TODO 続きは後日
 
 console.log('test success');
-
-
-
-
-
-
-
-
-

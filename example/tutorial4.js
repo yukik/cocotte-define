@@ -1,6 +1,5 @@
 'use strict';
 
-
 /**
  * 引数チェックを行うメソッドを定義する事が出来ます
  * 戻り値に関数の代わりにオブジェクトを指定します
@@ -13,21 +12,20 @@ var def = require('cocotte-define');
 // ------------- クラス定義
 
 var Klass = function Klass() {
-  // プロパティ定義を行う
-  def(this, null, meths);
+  this.def(Klass);
 };
+def(Klass);
 
-// メソッド定義
-var meths = {};
-
-// プロパティ定義の例
-meths.setName = function (pv) {
-  return {
-    params: [String],
-    method: function (val) {
-      pv.name = val;
-    }
-  };
+// メソッド定義の例
+Klass.methods = {
+  setName: function (pv) {
+    return {
+      params: [String],
+      method: function (val) {
+        pv.name = val;
+      }
+    };
+  }
 };
 
 // ------------- ユーザーコード
@@ -38,3 +36,5 @@ var k = new Klass();
 k.setName('foo');
 
 // k.setName(123); // 例外
+
+console.log(k.value);

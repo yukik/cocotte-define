@@ -3,7 +3,6 @@
 /**
  * Getter/Setterでのプロパティの設定です
  * プライベート変数を設定・取得出来ます
- * 型指定でのプロパティも同名でプロパティ変数に設定されています
  *
  * 設定時や取得時に細かな処理を記述する場合はこの方法を使用します
  * また、GetterのみSetterのみを指定する事で読取専用・書込専用のプロパティを
@@ -13,26 +12,23 @@
 var def = require('../define');
 
 // ------------- クラス定義
-
 var Klass = function Klass() {
-  // プロパティ定義を行う
-  def(this, props);
+  this.def(Klass);
 };
-
-// プロパティ定義
-var props = {};
+def(Klass);
 
 // プロパティ定義の例
-props.name = function (pv) {
-  return {
-    value: 'foo',
-    getter: function () {
-      return pv.name;
-    },
-    setter: function (value) {
-      pv.name = value;
-    }
-  };
+Klass.properties = {
+  name: function (pv) {
+    return {
+      getter: function () {
+        return pv.name;
+      },
+      setter: function (value) {
+        pv.name = value;
+      }
+    };
+  }
 };
 
 // ------------- ユーザーコード

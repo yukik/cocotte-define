@@ -1,38 +1,33 @@
 'use strict';
 
 /**
- * メソッドの定義ではプロベート変数を一つだけ引数に取る高階関数を
- * 定義します
+ * メソッドの定義ではプロベート変数を一つだけ引数に取る高階関数を定義します
  */
 
 var def = require('cocotte-define');
 
 // ------------- クラス定義
-
 var Klass = function Klass() {
-  // プロパティ定義を行う
-  def(this, null, meths);
+  this.def(Klass);
 };
+def(Klass);
 
 // メソッド定義
-var meths = {};
+Klass.methods = {
+  setName: function (pv) {
+    return function (val) {
+      pv.name = val;
+    };
+  },
 
-// プロパティ定義の例
-meths.setName = function (pv) {
-  return function (val) {
-    pv.name = val;
-  };
-};
-
-// プロパティ定義の例
-meths.getName = function (pv) {
-  return function () {
-    return pv.name;
-  };
+  getName: function (pv) {
+    return function () {
+      return pv.name;
+    };
+  }
 };
 
 // ------------- ユーザーコード
-
 var k = new Klass();
 
 // メソッドの実行
