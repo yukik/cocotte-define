@@ -62,6 +62,10 @@ getterを省略すると書込専用のプロパティになります。
 setterを省略すると読取専用のプロパティになります。
 
 ```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
 Klass.properties = {
   name: function (pv) {
     return {
@@ -74,6 +78,9 @@ Klass.properties = {
     };
   }
 };
+
+var k = new Klass();
+k.name = 'foo';
 ```
 
 ## メソッドを指定
@@ -123,6 +130,7 @@ Klass.methods = {
     };
   }
 };
+
 var k = new Klass();
 k.setName('foo');
 ```
