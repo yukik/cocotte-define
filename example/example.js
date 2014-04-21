@@ -2,68 +2,55 @@
 
 var def = require('../define');
 
-var props = {};
-var meths = {};
-
 var Klass = function Klass() {
-  def(this, props, meths);
+  this.def(Klass);
+};
+def(Klass);
+
+Klass.properties = {
+
+  name: {type: String},
+
+  birthday: {type: Date},
+
+  age: function (pv) {
+    return {
+      getter: function () {
+        return pv.birthday ? getAge(pv.birthday, new Date()) : null;
+      }
+    };
+  },
+
+  nameLength: function(pv){
+    return {
+      getter: function() {
+        return pv.name.length;
+      }
+    };
+  }
 };
 
-props.name = function (pv) {
-  return {
-    setter: function (val) {
-      pv.name = val;
-    },
-    getter: function () {
-      return pv.name;
-    }
-  };
+Klass.methods = {
+  getAge: function (pv) {
+    return {
+      params: [Date],
+      method: function (val) {
+        return getAge(pv.birthday, val || new Date());
+      }
+    };
+  }
 };
 
-props.age = function (pv) {
-  return {
-    setter: function (val) {
-      pv.age = val;
-    },
-    getter: function () {
-      return pv.age;
-    }
-  };
-};
-
-props.plus = function (pv) {
-  return {
-    setter: function (val) {
-      pv.age += val;
-    }
-  };
-};
-
-
-props.nameLength = function(pv){
-  return {
-    getter: function() {
-      return pv.name.length;
-    }
-  };
-};
-
-meths.addAge = function (pv) {
-  return function (val) {
-    pv.age += val;
-  };
-};
+function getAge (birthday, when) {
+  var b = new Date(birthday.getTime()).setFullYear(2000);
+  var w = new Date(when.getTime()).setFullYear(2000);
+  return when.getFullYear() - birthday.getFullYear() - (w >= b ? 0: 1);
+}
 
 var k = new Klass();
 
 k.name = 'foo';
+k.birthday = new Date('1980-3-22');
 
-k.age = 10;
-
-k.addAge(5);
-
-k.plus = 3;
-
+console.log(k.getAge(new Date('2000-2-14')));
 console.log(k.value);
-
-

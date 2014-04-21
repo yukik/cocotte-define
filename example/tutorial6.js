@@ -8,19 +8,20 @@ var def = require('cocotte-define');
 
 // ------------- スーパークラス定義
 
-var SuperKlass = function SuperKlass(config, pv) {
-  def(this, superProps, superMeths, config, pv);
-  this.prop1 = 1;
+var SuperKlass = function SuperKlass(prop1) {
+  this.def(SuperKlass);
+  this.prop1 = prop1;
 };
+def(SuperKlass);
 
-var superProps = {};
-superProps.prop2 = {type: String};
+SuperKlass.properties = {prop2: {type: String}};
 
-var superMeths = {};
-superMeths.setProp3 = function (pv) {
-  return function (val) {
-    pv.prop3 = val;
-  };
+SuperKlass.methods = {
+  setProp3: function (pv) {
+    return function (val) {
+      pv.prop3 = val;
+    };
+  }
 };
 
 SuperKlass.prototype.setProp4 = function setProp2 (val) {
@@ -28,19 +29,20 @@ SuperKlass.prototype.setProp4 = function setProp2 (val) {
 };
 
 // ------------- サブクラス定義
-var Klass = function Klass(config, pv) {
-  def(this, props, meths, config, pv, SuperKlass);
-  this.prop5 = 2;
+var Klass = function Klass(prop1, prop5) {
+  this.def(Klass, prop1);
+  this.prop5 = prop5;
 };
+def(Klass, SuperKlass);
 
-var props = {};
-props.prop6 = {type: String};
+Klass.properties = {prop6: {type: String}};
 
-var meths = {};
-meths.setProp7 = function (pv) {
-  return function (val) {
-    pv.prop7 = val;
-  };
+Klass.methods = {
+  setProp7: function (pv) {
+    return function (val) {
+      pv.prop7 = val;
+    };
+  }
 };
 
 Klass.prototype.setProp8 = function setProp8 (val) {
@@ -48,11 +50,7 @@ Klass.prototype.setProp8 = function setProp8 (val) {
 };
 
 // ------------- ユーザーコード
-var k = new Klass();
+var k = new Klass('foo', 'bar');
 console.log(k.value); // スーパークラスのdefine使用のプロパティはvalueで取得可能
 console.log(k.prop1); // スーパークラスの手動プロパティはvalueではなく直接取得
-
-
-
-
 

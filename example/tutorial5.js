@@ -3,49 +3,85 @@ var def = require('cocotte-define');
 
 /**
  * 継承パターン
+ *
+ * 継承を行う場合は、定義関数でdef(クラス, スーパークラス)とします
+ *
+ * スーパークラスのコンストラクタはコンストラクタの
+ * 初期化関数のthis.def(クラス, スーパークラスへの引数1, 引数2,...)とします
+ *
  */
 
-// ------------- スーパークラス定義
-var SuperKlass = function SuperKlass(config, pv) {
-  def(this, superProps, superMeths, config, pv);
+// ------------- スーパースーパークラス定義
+var SuperSuperKlass = function SuperSuperKlass(prop1) {
+  this.def(SuperSuperKlass);
+  this.prop1 = prop1;
 };
-var superProps = {};
-superProps.prop1 = {type: String};
-var superMeths = {};
-superMeths.setProp1 = function (pv) {
-  return {
-    params: [String],
-    method: function (val) {
-      pv.prop1 = val;
-    }
-  };
+def(SuperSuperKlass);
+
+SuperSuperKlass.properties = {
+  prop1: {type: String}
+};
+
+SuperSuperKlass.methods = {
+  setProp1: function (pv) {
+    return {
+      params: [String],
+      method: function (val) {
+        pv.prop1 = val;
+      }
+    };
+  }
+};
+
+// ------------- スーパークラス定義
+var SuperKlass = function SuperKlass(prop1, prop2) {
+  this.def(SuperKlass, prop1);
+  this.prop2 = prop2;
+};
+def(SuperKlass, SuperSuperKlass);
+
+SuperKlass.properties = {
+  prop2: {type: String}
+};
+
+SuperKlass.methods = {
+  setProp2: function (pv) {
+    return {
+      params: [String],
+      method: function (val) {
+        pv.prop1 = val;
+      }
+    };
+  }
 };
 
 // ------------- サブクラス定義
-var Klass = function Klass(config, pv) {
-  def(this, props, meths, config, pv, SuperKlass);
+var Klass = function Klass(prop1, prop2, prop3) {
+  this.def(Klass, prop1, prop2);
+  this.prop3 = prop3;
 };
-var props = {};
-props.prop2 = {type: String};
-var meths = {};
-meths.setProp2 = function (pv) {
-  return {
-    params: [String],
-    method: function (val) {
-      pv.prop2 = val;
-    }
-  };
+def(Klass, SuperKlass);
+
+Klass.properties = {
+  prop3: {type: String}
+};
+
+Klass.methods = {
+  setProp3: function (pv) {
+    return {
+      params: [String],
+      method: function (val) {
+        pv.prop3 = val;
+      }
+    };
+  }
 };
 
 // ------------- ユーザーコード
+var k = new Klass('foo', 'bar', 'baz');
 
-var k = new Klass({prop2: 'foo'});
-k.setProp1('bar');
 console.log(k.value);
 
-var k2 = new Klass({prop1: 'baz'});
-k2.setProp2('qux');
-console.log(k2.value);
 
 
 

@@ -1,19 +1,117 @@
-/*jshint maxparams:6*/
-
 'use strict';
+
+/**
+ * dependencies
+ */
+var util = require('util');
+
+/**
+ * (exports)
+ * 定義メソッド
+ * @method cocotteDefine
+ * @param  {Function}      Klass
+ * @param  {Function}      SuperKlass　継承元　（省略可能）
+ */
+var cocotteDefine = function cocotteDefine(Klass, SuperKlass) {
+  if (SuperKlass) {
+    util.inherits(Klass, SuperKlass);
+  }
+  Klass.prototype.def = protoDef;
+};
+
+/**
+ * 初期化メソッド
+ * @method protoDef
+ * @param  {Function} Klass
+ */
+var protoDef = function protoDef (Klass) {
+
+  // 初回に一時変数を設定
+  var first = tempSet(this);
+
+  // 親クラスのコンストラクタの呼び出し
+  var args = [].slice.call(arguments);
+  args.shift();
+  var SuperKlass = Klass.super_;
+  if (SuperKlass) {
+    if (args.length) {
+      SuperKlass.apply(this, args);
+    } else {
+      SuperKlass.call(this);
+    }
+  }
+
+  // プロパティの設定
+  var properties = Klass.properties;
+  if (properties) {
+    defineProperties(this, properties);
+  }
+
+  // メソッドの設定
+  var methods = Klass.methods;
+  if (methods) {
+    defineMethods(this, methods);
+  }
+
+  // 初回にvalueプロパティの追加と一時変数の削除
+  if (first) {
+    defineValueProperty(this);
+    tempDel(this);
+    // cocotte-defineで定義されたオブジェクトであるフラグを建てる
+    Object.defineProperty(this, 'cocotteDefine_',
+      {get: cocotteDefine_getter});
+  }
+};
+
+var cocotteDefine_getter = function () {return true;};
+
+/**
+ * 一時変数の設定
+ * @method tempSet
+ */
+var tempSet = function tempSet(instance) {
+
+  if (instance.def_) {
+    return false;
+  }
+
+  instance.def_ = {
+    pv: {},         // プライベート変数
+    gettable: [],   // 読取可能なプロパティ（親クラスも含む）
+    properties: [], // プロパティ一覧（親クラスも含む）
+    methods: []     // メソッド一覧（親クラスも含む）
+  };
+
+  return true;
+};
+
+// 一時変数の削除
+var tempDel = function tempDel (instance) {
+  delete instance.def_;
+};
 
 /**
  * プロパティ定義
  * @method defineProperties
- * @param  {Object} instance インスタンス
- * @param  {Object} props    Getter/Setterを定義したプロパティ
- * @param  {Object} pv       プライベート変数
- * @param  {Array}  
+ * @param  {Object} instance   インスタンス
+ * @param  {Object} properties Getter/Setterを定義したプロパティ
  */
-var defineProperties = function defineProperties(instance, props, pv) {
-  var gettable = [];
-  Object.keys(props).forEach(function(p) {
-    var def = props[p];
+var defineProperties = function defineProperties(instance, properties) {
+  var pv = instance.def_.pv;
+  var gettable = instance.def_.gettable;
+  Object.keys(properties).forEach(function(p) {
+    var def = properties[p];
+
+    // 同名の定義済みのプロパティが存在する場合は上書きする
+    if (~instance.def_.properties.indexOf(p)) {
+      gettable = gettable.filter(function(v) {return v !== p;});
+      instance.def_.properties = instance.def_.properties.filter(function(v) {return v !== p;});
+    }
+
+    // 同名の定義済みのメソッドが存在する場合は例外
+    if (~instance.def_.methods.indexOf(p)) {
+      throw new Error(p + 'は既にメソッドとして定義されているため、プロパティに設定できません');
+    }
 
     if (typeof def === 'function') {
       // 対象が定義用の関数の場合はgetter,setterを個別に設定
@@ -23,13 +121,9 @@ var defineProperties = function defineProperties(instance, props, pv) {
       }
       Object.defineProperty (instance, p, {
         enumerable: true,
-        set: n.setter,
-        get: n.getter
+        set: n.setter || setError,
+        get: n.getter || getError
       });
-      // 既定値の設定
-      if ('value' in n) {
-        instance[p] = n.value;
-      }
       if (n.getter) {
         gettable.push(p);
       }
@@ -45,17 +139,13 @@ var defineProperties = function defineProperties(instance, props, pv) {
         set: setter(p, type, pv),
         get: getter(p, pv)
       });
-      // 既定値の設定
-      if ('value' in def) {
-        instance[p] = def.value;
-      }
       gettable.push(p);
     }
 
-  });
-  return gettable;
-};
+    instance.def_.properties.push(p);
 
+  });
+};
 
 /**
  * 汎用セッタ
@@ -67,11 +157,20 @@ var defineProperties = function defineProperties(instance, props, pv) {
 var setter = function setter (propName, type, pv) {
   return function commonSetter (val) {
     if (val === null || val === void 0) {
-      // nullまたはundefinedはnullに設定する
       pv[propName] = null;
-    } else if (val.constructor === type) {
-      // 型が一致する場合にのみ設定できる
+
+    } else if (typeof val === 'string' && type === String) {
       pv[propName] = val;
+
+    } else if (typeof val === 'number' && type === Number) {
+      pv[propName] = val;
+
+    } else if (typeof val === 'boolean' && type === Boolean) {
+      pv[propName] = val;
+
+    } else if (val instanceof type) {
+      pv[propName] = val;
+
     } else {
       var name = type.name;
       var msg = name ? propName + 'は' + name + 'である必要があります' :
@@ -94,14 +193,102 @@ var getter = function getter (propName, pv) {
 };
 
 /**
+ * 読取専用プロパティ用setter
+ */
+var setError = function setterError() {
+  throw new Error('値を設定する事ができません');
+};
+
+/**
+ * 書込専用プロパティ用getter
+ */
+var getError = function setterError() {
+  throw new Error('値を取得する事ができません');
+};
+
+/*
+ * 一覧を取得するプロパティvalueのgetter
+ */
+var defineValueProperty = function defineValueProperty (instance) {
+
+  var gettable = instance.def_.gettable;
+  var properties = instance.def_.properties;
+  var methods = instance.def_.methods;
+
+  // 自己循環対策
+  var ref  = null;
+
+  Object.defineProperty(instance, 'value', {
+    enumerable: true,
+    get: function value () {
+
+      var root = !ref;
+      if (root) {
+        ref = [];
+      }
+      var v = {};
+
+      try {
+        // インスタンスに直接設定したプロパティの値を取得
+        for(var p in instance) {
+          if (
+            // 読取可能プロパティ
+            ~gettable.indexOf(p) ||
+            // cocotteでは定義されていないプロパティ
+            instance.hasOwnProperty(p) && p !== 'value' &&
+            !~properties.indexOf(p) && !~methods.indexOf(p)) {
+
+            var item = instance[p];
+
+            // プロパティの値が更にcocotteDefineで設定されて
+            // いる場合は、valueの値を返す
+            if (item && typeof item === 'object') {
+              if (~ref.indexOf(item)) {
+                v[p] = item;
+              } else {
+                ref.push(item);
+                v[p] = item.cocotteDefine_ ? item.value : item;
+              }
+
+            } else {
+              v[p] = item;
+
+            }
+          }
+        }
+      } catch (e) {
+        ref = null;
+        throw e;
+      }
+
+      if (root) {
+        ref = null;
+      }
+      return v;
+    },
+    set: function () {
+      throw new Error('valueには値を設定できません');
+    }
+  });
+};
+
+/**
  * メソッド定義
  * @param  {Object} instance インスタンス
  * @param  {Object} meths    メソッド
  * @param  {Object} pv       プライベート変数
  */
-var defineMethods = function defineMethods (instance, meths, pv) {
-  Object.keys(meths).forEach(function(m) {
-    var def = meths[m](pv);
+var defineMethods = function defineMethods (instance, methods) {
+
+  var pv = instance.def_.pv;
+
+  Object.keys(methods).forEach(function(m) {
+
+    if (~instance.def_.properties.indexOf(m)) {
+      throw new Error(m + 'は既にプロパティとして定義されているため、メソッドに設定できません');
+    }
+
+    var def = methods[m](pv);
 
     if (typeof def === 'function') {
       // 型チェック無し
@@ -112,6 +299,9 @@ var defineMethods = function defineMethods (instance, meths, pv) {
       instance[m] = method(m, def);
     }
     
+    if (!~instance.def_.methods.indexOf(m)) {
+      instance.def_.methods.push(m);
+    }
   });
 };
 
@@ -146,11 +336,23 @@ var method = function method (methodName, def) {
         throw new TypeError('引数' + i + 'は設定してはいけません');
       }
       // null,undefinedは型のチェックをしない
-      if (v === null || v === void 0 || v.constructor === type) {
+      if (v === null || v === void 0) {
         p.push(v);
 
-      // 型の不一致が発生
+      } else if (typeof v === 'string' && type === String) {
+        p.push(v);
+
+      } else if (typeof v === 'number' && type === Number) {
+        p.push(v);
+
+      } else if (typeof v === 'boolean' && type === Boolean) {
+        p.push(v);
+
+      } else if (v instanceof type) {
+        p.push(v);
+
       } else {
+        // 型の不一致が発生
         var name = type.name;
         var msg = name ? methodName + 'の引数' + i + 'は' + name + 'である必要があります' :
             methodName + 'の引数' + i + 'に不正な値が設定されました';
@@ -158,103 +360,7 @@ var method = function method (methodName, def) {
       }
     }
     // メソッドの実行
-    md.apply(this, p);
-  };
-};
-
-/**
- * クラス定義
- * コンストラクタ内で呼び出し
- * @param  {Object} instance インスタンス
- * @param  {Object} props    プロパティ定義
- * @param  {Object} meths    メソッド定義
- */
-var cocotteDefine = function cocotteDefine (instance, props, meths, config, pv, SuperClass) {
-
-  // new チェック
-  if (instance === global || instance === undefined) {
-    throw new Error('newを付加しないでコンストラクタを実行してはいけません');
-  }
-
-  // 初期値
-  config = config || {};
-
-  // プライベート変数
-  pv = pv || {};
-
-  // 継承
-  if (SuperClass) {
-    instance.__proto__.__proto__ = new SuperClass(config, pv);
-  }
-
-  if (!pv.value) {
-    pv.value = [];
-  }
-
-  // 取得可能プロパティ
-  var gettable = [].concat(pv.value);
-
-  // 全プロパティとメソッド名
-  var allNames = ['value'];
-
-  // プロパティの設定
-  if (props) {
-    allNames = allNames.concat(Object.keys(props));
-    var g = defineProperties(instance, props, pv);
-    g.forEach(function(p){
-      if (!~gettable.indexOf(p)) {
-        pv.value.push(p);
-        gettable.push(p);
-      }
-    });
-
-    // 値の設定
-    Object.keys(config).forEach(function(k){
-      if (props[k]) {
-        instance[k] = config[k];
-      }
-    });
-  }
-
-  if (meths) {
-    allNames = allNames.concat(Object.keys(meths));
-    defineMethods(instance, meths, pv);
-  }
-
-  // 名称の衝突チェック
-  var unique = allNames.every(function (v, i, self) {
-    return self.indexOf(v) === self.lastIndexOf(v);
-  });
-  if (!unique) {
-    throw new Error('プロパティ名とメソッド名が衝突しています');
-  }
-
-  // instance.valueでプロパティのすべての値を取得
-  Object.defineProperty (instance, 'value', {
-    enumerable: true,
-    get: valueGetter(instance, gettable, allNames)
-  });
-
-  return cocotteDefine;
-};
-
-/*
- * 一覧を取得するプロパティvalueのgetter
- */
-var valueGetter = function valueGetter (instance, gettable, names) {
-  return function value () {
-    var v = {};
-    gettable.forEach(function(p){
-      v[p] = instance[p];
-    });
-
-    // インスタンスに直接設定したプロパティの値を取得
-    for(var p in instance) {
-      if (instance.hasOwnProperty(p) && !~names.indexOf(p)) {
-        v[p] = instance[p];
-      }
-    }
-    return v;
+    return md.apply(this, p);
   };
 };
 
