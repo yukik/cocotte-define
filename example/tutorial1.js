@@ -21,8 +21,10 @@ var Klass = function Klass() {
 def(Klass);
 
 // プロパティ定義
-Klass.properties.name = {type: String};
-Klass.properties.age = {type: Number};
+Klass.properties = {
+  name: {type: String},
+  age: {type: Number}
+};
 
 // ------------- ユーザーコード
 var k = new Klass();
@@ -37,6 +39,8 @@ console.log(k.name);
 
 // プロパティの全ての値の取得
 console.log(k.value);
+
+
 
 
 

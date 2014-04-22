@@ -17,8 +17,6 @@ var cocotteDefine = function cocotteDefine(Klass, SuperKlass) {
     util.inherits(Klass, SuperKlass);
   }
   Klass.prototype.def = protoDef;
-  Klass.properties = {};
-  Klass.methods = {};
 };
 
 /**
@@ -44,30 +42,32 @@ var protoDef = function protoDef (Klass) {
   }
 
   // プロパティの設定
-  defineProperties(this, Klass.properties);
+  var properties = Klass.properties;
+  if (properties) {
+    defineProperties(this, properties);
+  }
 
   // メソッドの設定
-  defineMethods(this, Klass.methods);
-  
-  // 初回定義の後始末
+  var methods = Klass.methods;
+  if (methods) {
+    defineMethods(this, methods);
+  }
+
+  // 初回にvalueプロパティの追加と一時変数の削除
   if (first) {
     defineValueProperty(this);
     tempDel(this);
     // cocotte-defineで定義されたオブジェクトであるフラグを建てる
-    Object.defineProperty(this, 'cocotteDefine_', {value: true, writable: false});
-    // 初期化関数が再度動作しないように設定される
-    Object.defineProperty(this, 'def', {value: nothingToDo, writable: false});
+    Object.defineProperty(this, 'cocotteDefine_',
+      {get: cocotteDefine_getter});
   }
 };
 
-/**
- * 初期化関数が再度動作しないように設定される
- * @method nothingToDo
- */
-var nothingToDo = function () {};
+var cocotteDefine_getter = function () {return true;};
 
 /**
  * 一時変数の設定
+ * @method tempSet
  */
 var tempSet = function tempSet(instance) {
 
@@ -85,9 +85,7 @@ var tempSet = function tempSet(instance) {
   return true;
 };
 
-/**
- * 一時変数の削除
- */
+// 一時変数の削除
 var tempDel = function tempDel (instance) {
   delete instance.def_;
 };
@@ -151,6 +149,10 @@ var defineProperties = function defineProperties(instance, properties) {
 
 /**
  * 汎用セッタ
+ * @method setter
+ * @param  {String} propName
+ * @param  {Object} def
+ * @param  {Object} pv
  */
 var setter = function setter (propName, type, pv) {
   return function commonSetter (val) {
@@ -180,6 +182,9 @@ var setter = function setter (propName, type, pv) {
 
 /**
  * 汎用ゲッタ
+ * @method getter
+ * @param  {String} propName
+ * @return {Mixed}  値
  */
 var getter = function getter (propName, pv) {
   return function commonGetter () {
@@ -230,7 +235,7 @@ var defineValueProperty = function defineValueProperty (instance) {
             // 読取可能プロパティ
             ~gettable.indexOf(p) ||
             // cocotteでは定義されていないプロパティ
-            p !== 'value' && p !== 'def' && instance.hasOwnProperty(p) &&
+            instance.hasOwnProperty(p) && p !== 'value' &&
             !~properties.indexOf(p) && !~methods.indexOf(p)) {
 
             var item = instance[p];
@@ -239,7 +244,6 @@ var defineValueProperty = function defineValueProperty (instance) {
             // いる場合は、valueの値を返す
             if (item && typeof item === 'object') {
               if (~ref.indexOf(item)) {
-                // 自己参照はvalueにアクセスしない
                 v[p] = item;
               } else {
                 ref.push(item);
@@ -272,6 +276,7 @@ var defineValueProperty = function defineValueProperty (instance) {
  * メソッド定義
  * @param  {Object} instance インスタンス
  * @param  {Object} meths    メソッド
+ * @param  {Object} pv       プライベート変数
  */
 var defineMethods = function defineMethods (instance, methods) {
 
@@ -303,6 +308,7 @@ var defineMethods = function defineMethods (instance, methods) {
 /**
  * 引数チェックを含んだメソッド
  * @method method
+ * @param  {Object} instance
  * @param  {String} methodName
  * @param  {Object} def
  */
