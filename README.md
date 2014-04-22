@@ -7,7 +7,7 @@ cocotte-define
 
 javascriptでクラスを定義することを簡単かつ安全に行うためのヘルパーです。
 プライベート変数と継承の同時に実装すると煩雑になりやすいですが、
-ヘルパー関数を使用する事で保守しやすくなります。
+ヘルパー関数を使用する事で簡単に実装出来、保守しやすくなります。
 
 #機能
 
@@ -20,9 +20,11 @@ javascriptでクラスを定義することを簡単かつ安全に行うため�
 
 #使用方法
 
+1.定義関数をクラスに設定する
+
 1.プロパティとメソッドの定義を行う
 
-2.定義関数をクラスに設定する
+
 
 3.初期化関数をコンストラクタ内で呼び出す
 
@@ -37,9 +39,32 @@ var def = require('cocotte-define');
 
 以下のサンプルコードでは`def`を使用します
 
+## 定義関数・初期化関数の設定
 
-##プロパティの簡易な型指定
-Klassにpropertiesオブジェクトを設定します
+定義関数により次の事が実行されます。
+
+  + prototypeに初期化関数のdefが追加されます
+  + クラスのproperties,methodsにアクセス出来るようになります
+  + 継承を設定します
+
+初期化関数により次の事が実行されます。
+
+  + インスタンスにプライベート変数を利用可能なプロパティを設定します
+  + インスタンスにプライベート変数を利用可能なメソッドを設定します
+  + インスタンスにvalueプロパティを設定します
+
+```javascript
+var Klass = function Klass() {
+  // 初期化関数
+  this.def(Klass);
+};
+// 定義関数
+def(Klass);
+```
+
+## プロパティの簡易な型指定
+
+Klassのpropertiesに定義します
 `{type: 型}`を設定することで、自動的に型チェックを行うGetter/Setterがプロパティに設定されます
 
 ```javascript
@@ -47,7 +72,7 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.properties = {name: {type: String}};
+Klass.properties.name = {type: String};
 
 var k = new Klass();
 k.name = 'foo';
@@ -66,17 +91,15 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.properties = {
-  name: function (pv) {
-    return {
-      getter: function () {
-        return pv.name;
-      },
-      setter: function (val) {
-        pv.name = val;
-      }
-    };
-  }
+Klass.properties.name = function (pv) {
+  return {
+    getter: function () {
+      return pv.name;
+    },
+    setter: function (val) {
+      pv.name = val;
+    }
+  };
 };
 
 var k = new Klass();
@@ -85,7 +108,7 @@ k.name = 'foo';
 
 ## メソッドを指定
 
-Klassにmethodsオブジェクトを定義をします
+Klassのmethodsに定義をします
 プレイベート変数をひとつ引数に持つ高階関数をメソッド名で追加します
 
 ```javascript
@@ -93,12 +116,10 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.methods = {
-  setName: function (pv) {
-    return function (val) {
-      pv.name = val;
-    };
-  }
+Klass.methods.setName = function (pv) {
+  return function (val) {
+    pv.name = val;
+  };
 };
 
 var k = new Klass();
@@ -120,15 +141,13 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.methods = {
-  setName: function (pv) {
-    return {
-      params: [String],
-      method: function (val) {
-        pv.name = val;
-      }
-    };
-  }
+Klass.methods.setName = function (pv) {
+  return {
+    params: [String],
+    method: function (val) {
+      pv.name = val;
+    }
+  };
 };
 
 var k = new Klass();
@@ -147,18 +166,14 @@ var SuperKlass = function SuperKlass (prop1) {
   this.prop1 = prop1;
 };
 def(SuperKlass);
-SuperKlass.properties = {
-  prop1: {type: String}
-};
+SuperKlass.properties.prop1 = {type: String};
 
 var Klass = function Klass (prop1, prop2) {
   this.def(Klass, prop1);
   this.prop2 = prop2;
 };
 def(Klass, SuperKlass);
-Klass.properties = {
-  prop2: {type: String}
-};
+Klass.properties.prop2 = {type: String};
 
 var k = new Klass('foo', 'bar');
 console.log(k.prop1); // 'foo'

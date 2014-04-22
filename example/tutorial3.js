@@ -4,7 +4,7 @@
  * メソッドの定義ではプロベート変数を一つだけ引数に取る高階関数を定義します
  */
 
-var def = require('cocotte-define');
+var def = require('../define');
 
 // ------------- クラス定義
 var Klass = function Klass() {
@@ -13,18 +13,15 @@ var Klass = function Klass() {
 def(Klass);
 
 // メソッド定義
-Klass.methods = {
-  setName: function (pv) {
-    return function (val) {
-      pv.name = val;
-    };
-  },
-
-  getName: function (pv) {
-    return function () {
-      return pv.name;
-    };
-  }
+Klass.methods.setName = function (pv) {
+  return function (val) {
+    pv.name = val;
+  };
+};
+Klass.methods.getName = function (pv) {
+  return function () {
+    return pv.name;
+  };
 };
 
 // ------------- ユーザーコード
