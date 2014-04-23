@@ -40,6 +40,13 @@ Klass.prototype.setProp8 = function setProp8 (val) {
 
 // ------------- ユーザーコード
 var k = new Klass('foo', 'bar');
-console.log(k.value); // スーパークラスのdefine使用のプロパティはvalueで取得可能
-console.log(k.prop1); // スーパークラスの手動プロパティはvalueではなく直接取得
+
+k.prop2 = 'baz';
+k.setProp3('qux');
+k.setProp4('hoge');
+k.prop6 = 'piyo';
+k.setProp7('fuga');
+k.setProp8('hogera');
+
+console.log(k.value);
 
