@@ -17,6 +17,8 @@ var cocotteDefine = function cocotteDefine(Klass, SuperKlass) {
     util.inherits(Klass, SuperKlass);
   }
   Klass.prototype.def = protoDef;
+  Klass.properties = {};
+  Klass.methods = {};
 };
 
 /**

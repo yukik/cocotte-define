@@ -6,41 +6,32 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-
-Klass.properties = {
-
-  name: {type: String},
-
-  birthday: {type: Date},
-
-  age: function (pv) {
-    return {
-      getter: function () {
-        return pv.birthday ? getAge(pv.birthday, new Date()) : null;
-      }
-    };
-  },
-
-  nameLength: function(pv){
-    return {
-      getter: function() {
-        return pv.name.length;
-      }
-    };
-  }
+Klass.properties.name = {type: String};
+Klass.properties.birthday = {type: Date};
+Klass.properties.age = function (pv) {
+  return {
+    getter: function () {
+      return pv.birthday ? getAge(pv.birthday, new Date()) : null;
+    }
+  };
+};
+Klass.properties.nameLength = function(pv){
+  return {
+    getter: function() {
+      return pv.name.length;
+    }
+  };
+};
+Klass.methods.getAge = function (pv) {
+  return {
+    params: [Date],
+    method: function (val) {
+      return getAge(pv.birthday, val || new Date());
+    }
+  };
 };
 
-Klass.methods = {
-  getAge: function (pv) {
-    return {
-      params: [Date],
-      method: function (val) {
-        return getAge(pv.birthday, val || new Date());
-      }
-    };
-  }
-};
-
+// 年齢計算
 function getAge (birthday, when) {
   var b = new Date(birthday.getTime()).setFullYear(2000);
   var w = new Date(when.getTime()).setFullYear(2000);

@@ -19,12 +19,8 @@ var Klass = function Klass() {
   this.age = 30;
 };
 def(Klass);
-
-// プロパティ定義
-Klass.properties = {
-  name: {type: String},
-  age: {type: Number}
-};
+Klass.properties.name = {type: String};
+Klass.properties.age = {type: Number};
 
 // ------------- ユーザーコード
 var k = new Klass();

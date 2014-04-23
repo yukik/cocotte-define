@@ -10,22 +10,17 @@
 var def = require('cocotte-define');
 
 // ------------- クラス定義
-
 var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-
-// メソッド定義の例
-Klass.methods = {
-  setName: function (pv) {
-    return {
-      params: [String],
-      method: function (val) {
-        pv.name = val;
-      }
-    };
-  }
+Klass.methods.setName = function (pv) {
+  return {
+    params: [String],
+    method: function (val) {
+      pv.name = val;
+    }
+  };
 };
 
 // ------------- ユーザーコード
