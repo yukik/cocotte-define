@@ -19,7 +19,49 @@ var cocotteDefine = function cocotteDefine(Klass, SuperKlass) {
   Klass.prototype.def = protoDef;
   Klass.properties = {};
   Klass.methods = {};
+  // プロトタイプに設定するプロパティとメソッド
+  Klass.setProperty = setProperty;
+  Klass.setMethod = setMethod;
 };
+
+/**
+ * プロトタイプに直接メソッドを追加する
+ * @method setProperty
+ * @param  {String} name
+ * @param  {Object} config
+ */
+var setProperty = function setProperty(name, config) {
+  if (typeof name !== 'string' || typeof config !== 'object' || config === null) {
+    throw new TypeError('引数エラー');
+  }
+
+  if ('type' in config === ('setter' in config || 'getter' in config)) {
+    throw new TypeError('typeとsetter/getterを同時に設定する事はできません');
+  }
+
+  if ('type' in config) {
+    Object.defineProperty (this.prototype, name, {
+      enumerable: true,
+      set: setterForPrototype(name, config.type),
+      get: getterForPrototype(name)
+    });
+
+  } else {
+    Object.defineProperty (this.prototype, name, {
+      enumerable: true,
+      set: config.setter || setError,
+      get: config.getter || getError
+    });
+  }
+};
+
+var setMethod = function setMethod (name, config) {
+  if (typeof name !== 'string' || typeof config !== 'object' || config === null) {
+    throw new TypeError('引数エラー');
+  }
+  this.prototype[name] = methodArgCheck(name, config);
+};
+
 
 /**
  * 初期化メソッド
@@ -44,16 +86,10 @@ var protoDef = function protoDef (Klass) {
   }
 
   // プロパティの設定
-  var properties = Klass.properties;
-  if (properties) {
-    defineProperties(this, properties);
-  }
-
+  defineProperties(this, Klass.properties);
+  
   // メソッドの設定
-  var methods = Klass.methods;
-  if (methods) {
-    defineMethods(this, methods);
-  }
+  defineMethods(this, Klass.methods);
 
   // 初回にvalueプロパティの追加と一時変数の削除
   if (first) {
@@ -106,7 +142,7 @@ var defineProperties = function defineProperties(instance, properties) {
 
     // 同名の定義済みのプロパティが存在する場合は上書きする
     if (~instance.def_.properties.indexOf(p)) {
-      gettable = gettable.filter(function(v) {return v !== p;});
+      gettable = instance.def_.gettable = gettable.filter(function(v) {return v !== p;});
       instance.def_.properties = instance.def_.properties.filter(function(v) {return v !== p;});
     }
 
@@ -138,8 +174,8 @@ var defineProperties = function defineProperties(instance, properties) {
       }
       Object.defineProperty (instance, p, {
         enumerable: true,
-        set: setter(p, type, pv),
-        get: getter(p, pv)
+        set: setterWithPrivate(p, type, pv),
+        get: getterWithPrivate(p, pv)
       });
       gettable.push(p);
     }
@@ -149,15 +185,44 @@ var defineProperties = function defineProperties(instance, properties) {
   });
 };
 
+
+
+var setterForPrototype = function setterForPrototype(propName, type) {
+  return function setter (val) {
+    var name = propName + '_';
+    if (val === null || val === void 0) {
+      this[name] = null;
+
+    } else if (typeof val === 'string' && type === String) {
+      this[name] = val;
+
+    } else if (typeof val === 'number' && type === Number) {
+      this[name] = val;
+
+    } else if (typeof val === 'boolean' && type === Boolean) {
+      this[name] = val;
+
+    } else if (val instanceof type) {
+      this[name] = val;
+
+    } else {
+      var typeName = type.name;
+      var msg = typeName ? propName + 'は' + typeName + 'である必要があります' :
+            propName + 'に不正な値が設定されました';
+      throw new TypeError(msg);
+    }
+  };
+};
+
 /**
- * 汎用セッタ
- * @method setter
+ * プライベート変数あり汎用セッタ
+ * @method setterWithPrivate
  * @param  {String} propName
  * @param  {Object} def
  * @param  {Object} pv
  */
-var setter = function setter (propName, type, pv) {
-  return function commonSetter (val) {
+var setterWithPrivate = function setterWithPrivate (propName, type, pv) {
+  return function setter (val) {
     if (val === null || val === void 0) {
       pv[propName] = null;
 
@@ -174,8 +239,8 @@ var setter = function setter (propName, type, pv) {
       pv[propName] = val;
 
     } else {
-      var name = type.name;
-      var msg = name ? propName + 'は' + name + 'である必要があります' :
+      var typeName = type.name;
+      var msg = typeName ? propName + 'は' + typeName + 'である必要があります' :
             propName + 'に不正な値が設定されました';
       throw new TypeError(msg);
     }
@@ -183,13 +248,27 @@ var setter = function setter (propName, type, pv) {
 };
 
 /**
- * 汎用ゲッタ
- * @method getter
+ * プロトタイプ用汎用ゲッタ
+ * @method getterForPrototype
  * @param  {String} propName
  * @return {Mixed}  値
  */
-var getter = function getter (propName, pv) {
-  return function commonGetter () {
+var getterForPrototype = function getterForPrototype (propName) {
+  return function getter () {
+    var name = propName + '_';
+    return name in this ? this[name] : null;
+  };
+};
+
+/**
+ * プライベート変数あり汎用ゲッタ
+ * @method getterWithPrivate
+ * @param  {String} propName
+ * @param  {Object} pv
+ * @return {Mixed}  値
+ */
+var getterWithPrivate = function getterWithPrivate (propName, pv) {
+  return function getter () {
     return propName in pv ? pv[propName] : null;
   };
 };
@@ -298,7 +377,7 @@ var defineMethods = function defineMethods (instance, methods) {
 
     } else if (typeof def === 'object'){
       // 型チェックあり
-      instance[m] = method(m, def);
+      instance[m] = methodArgCheck(m, def);
     }
     
     if (!~instance.def_.methods.indexOf(m)) {
@@ -310,11 +389,10 @@ var defineMethods = function defineMethods (instance, methods) {
 /**
  * 引数チェックを含んだメソッド
  * @method method
- * @param  {Object} instance
  * @param  {String} methodName
  * @param  {Object} def
  */
-var method = function method (methodName, def) {
+var methodArgCheck = function methodArgCheck (methodName, def) {
   var params = def.params;
   var md = def.method;
 

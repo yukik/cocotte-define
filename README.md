@@ -17,6 +17,7 @@ javascriptでクラスを定義することを簡単かつ安全に行うため�
  + プライベート変数
  + 継承
  + プロパティのすべての値の一括取得
+ + prototypeへの設定
 
 #使用方法
 
@@ -42,6 +43,7 @@ var def = require('cocotte-define');
 
   + prototypeに初期化関数のdefが追加されます
   + クラスのproperties,methodsにアクセス出来るようになります
+  + クラスにsetPropery,setMethodのヘルパー系関数を追加します
   + 継承を設定します
 
 初期化関数により次の事が実行されます。
@@ -186,4 +188,83 @@ valueは親クラスで定義されたプロパティも確認することがで
 ```javascript
 var k = new Klass('foo', 'bar');
 console.log(k.value);
+```
+
+# prototypeに設定しメモリ効率化
+
+上記のプロパティおよびメソッドの定義は、プライベート変数を簡単に使用する事ができます。  
+しかし、インスタンスに対して設定されているため、メモリ効率はよくありません。  
+
+プライベート変数への設定・取得のないプロパティやメソッドの定義は次のように行ってください。  
+
+また、`prototype`に設定されたプロパティは、`value`プロパティで取得対象にはなりません。  
+インスタンスに通常に設定された値を確認する事で対応できます
+
+
+## プロパティの簡易な型指定 (prototype)
+
+`setProperty`を使用する事で、自動的に型チェックを行うGetter/Setterを定義します  
+実際に設定された値は、プロパティに`_`を追加した名称で登録されます。
+
+```
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.setProperty('name', {type: String});
+
+var k = new Klass();
+k.name = 'foo';
+```
+
+## Getter/Setterを指定 (prototype)
+
+getterを省略すると書込専用のプロパティになります。 setterを省略すると読取専用のプロパティになります。
+
+```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.setProperty('name', {
+  getter: function () {
+    return this.name_;
+  },
+  setter: function (val) {
+    this.name_ = val;
+  }
+});
+
+var k = new Klass();
+k.name = 'foo';
+```
+
+## メソッドを指定 (prototype)
+
+`setMethod`を使用します。  
+`params`, `method`は必ず指定します。  
+プライベート変数を取得・変更出来ない事をのぞくと
+「引数の型を確認するメソッドを指定」と同様の動作をします。
+
+```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.setMethod('setName', {
+  params: [String],
+  method: function (val) {
+    this.name = val;
+  }
+});
+var k = new Klass();
+k.setName('foo');
+```
+
+引数または型確認が不要の場合は、通常の方法でprototypeに追加してください
+
+```javascript
+Klass.prototype.setName = function (val) {
+  this.name= val;
+};
 ```
