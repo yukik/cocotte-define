@@ -13,7 +13,7 @@
     "url": "git://github.com/yukik/cocotte-define.git"
   },
   "main": "define.js",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "scripts": {
     "test": "node ./test/test.js"
   },
