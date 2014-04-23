@@ -11,20 +11,15 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-
-// メソッド定義
-Klass.methods = {
-  setName: function (pv) {
-    return function (val) {
-      pv.name = val;
-    };
-  },
-
-  getName: function (pv) {
-    return function () {
-      return pv.name;
-    };
-  }
+Klass.methods.setName = function (pv) {
+  return function (val) {
+    pv.name = val;
+  };
+};
+Klass.methods.getName = function (pv) {
+  return function () {
+    return pv.name;
+  };
 };
 
 // ------------- ユーザーコード

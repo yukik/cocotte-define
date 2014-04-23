@@ -16,19 +16,15 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-
-// プロパティ定義の例
-Klass.properties = {
-  name: function (pv) {
-    return {
-      getter: function () {
-        return pv.name;
-      },
-      setter: function (value) {
-        pv.name = value;
-      }
-    };
-  }
+Klass.properties.name = function (pv) {
+  return {
+    getter: function () {
+      return pv.name;
+    },
+    setter: function (value) {
+      pv.name = value;
+    }
+  };
 };
 
 // ------------- ユーザーコード
