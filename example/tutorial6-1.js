@@ -3,7 +3,7 @@
 var def = require('cocotte-define');
 
 /**
- * prototypeにプロパティを設定 (getter/setter)
+ * prototypeプロパティ (getter/setter)
  *
  * Getter/Setterを手動で設定します
  * tutorial2と似ていますが、プライベート変数を設定・取得する事ができません

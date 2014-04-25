@@ -3,20 +3,22 @@
 var def = require('cocotte-define');
 
 /**
- * prototypeにプロパティを設定 (type)
- *
- * tutorial1の次の設定方法との違い
- *   Klass.properties.prop1 = {type: String};
- *
- * Getter/Setter
- *   tutorial1はインスタンスに設定されるのに対し、
- *   prototypeに設定されます
- *   メモリ効率はsetPropertyを使用した方が良くなります
- *
- * 実の値の格納方法
- *   tutorial1はプライベート変数に格納されるのに対し、
- *   プロパティ名 + '_'のパブリック変数に格納されます
+ * prototypeメソッド
  * 
+ * paramsに引数の型を指定します。
+ * methodが実行される前に型確認をし、合わない場合は例外が発生します
+ *
+ * ただし、null/undefinedは型確認をパスします
+ * 
+ * tutorial4と似ていますが、プライベート変数を設定・取得する事ができません
+ * prototypeに設定されるためメモリ効率はよくなります。
+ *
+ * 引数または型確認が不要の場合は、通常の方法でprototypeに追加してください
+ * その方が無駄がありません。
+ * 
+ *   Klass.prototype.meth1 = function (val) {
+ *     this.prop1= val;
+ *   };
  */
 
 // ------------- クラス定義
@@ -24,13 +26,19 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.setProperty('prop1', {type: String});
+Klass.setMethod('meth1', {
+  params: [String],
+  method: function (val) {
+    this.prop1 = val;
+  }
+});
 
 // ------------- ユーザーコード
 var k = new Klass();
 
-k.prop1 = 'foo';
+k.meth1('foo');
 
-console.log(k.value); // prop1の代わりにprop1_と表示されます
-console.log(k.prop1); // 値は普通に取得出来ます
+// k.meth1(123); // 例外
+
+console.log(k.value);
 

@@ -67,11 +67,38 @@ var setProperty = function setProperty(name, config) {
   });
 };
 
+/**
+ * プロトタイプメソッドの追加
+ * @method setMethod
+ * @param  {String}  name
+ * @param  {Object}  config
+ */
 var setMethod = function setMethod (name, config) {
   if (typeof name !== 'string' || typeof config !== 'object' || config === null) {
     throw new TypeError('引数エラー');
   }
-  this.prototype[name] = methodArgCheck(name, config);
+
+  if (!Array.isArray(config.params) || typeof config.method !== 'function') {
+    throw new Error('paramsとmethodの定義が不正です');
+  }
+
+  var methods = [];
+
+  if (this.prototype.hasOwnProperty(name)) {
+    if (typeof this.prototype[name] !== 'function') {
+      throw new Error(name + 'は既にメソッドではない定義がされています');
+    }
+
+    methods = this.prototype[name].methods;
+
+    if (!methods) {
+      throw new Error(name + 'は既にsetMethod以外で定義されたメソッドが設定されています');
+    }
+  }
+
+  methods.push(config);
+
+  this.prototype[name] = methodArgCheck(name, methods);
 };
 
 /**
@@ -377,7 +404,7 @@ var defineValueProperty = function defineValueProperty (instance) {
 };
 
 /**
- * メソッド定義
+ * インスタンスメソッド定義
  * @param  {Object} instance インスタンス
  * @param  {Object} meths    メソッド
  * @param  {Object} pv       プライベート変数
@@ -389,7 +416,8 @@ var defineMethods = function defineMethods (instance, methods) {
   Object.keys(methods).forEach(function(m) {
 
     if (~instance.def_.properties.indexOf(m)) {
-      throw new Error(m + 'は既にプロパティとして定義されているため、メソッドに設定できません');
+      var msg = m + 'は既にプロパティとして定義されているため、メソッドに設定できません';
+      throw new Error(msg);
     }
 
     var def = methods[m](pv);
@@ -398,9 +426,14 @@ var defineMethods = function defineMethods (instance, methods) {
       // 型チェック無し
       instance[m] = def;
 
+    } else if (Array.isArray(def)) {
+      // 型チェックありオーバーロードあり
+      instance[m] = methodArgCheck(m, def);
+
     } else if (typeof def === 'object'){
       // 型チェックあり
-      instance[m] = methodArgCheck(m, def);
+      instance[m] = methodArgCheck(m, [def]);
+
     }
     
     if (!~instance.def_.methods.indexOf(m)) {
@@ -416,55 +449,65 @@ var defineMethods = function defineMethods (instance, methods) {
  * @param  {Object} def
  */
 var methodArgCheck = function methodArgCheck (methodName, def) {
-  var params = def.params;
-  var md = def.method;
 
-  if (!(params instanceof Array)) {
-    throw new TypeError('paramsが設定されていません');
-  }
+  var method = function paramCheckMethod() {
+    var self = this;
+    var values = [].slice.apply(arguments);
+    var result;
 
-  if (typeof md !== 'function') {
-    throw new TypeError('methodが設定されていません');
-  }
+    var run = def.some(function(m) {
+      var params = m.params;
+      var len = values.length;
 
-  return function paramCheckMethod() {
-    var p = [];
-
-    // 引数チェック
-    for(var i = 0, len = arguments.length; i < len; i++) {
-      var type = params[i];
-      var v = arguments[i];
-
-      if (!type) {
-        throw new TypeError('引数' + i + 'は設定してはいけません');
+      if (params.length !== len) {
+        return false;
       }
-      // null,undefinedは型のチェックをしない
-      if (v === null || v === void 0) {
-        p.push(v);
 
-      } else if (typeof v === 'string' && type === String) {
-        p.push(v);
+      // 引数チェック
+      for(var i = 0; i < len; i++) {
+        var type = params[i];
+        var v = values[i];
 
-      } else if (typeof v === 'number' && type === Number) {
-        p.push(v);
-
-      } else if (typeof v === 'boolean' && type === Boolean) {
-        p.push(v);
-
-      } else if (v instanceof type) {
-        p.push(v);
-
-      } else {
-        // 型の不一致が発生
-        var name = type.name;
-        var msg = name ? methodName + 'の引数' + i + 'は' + name + 'である必要があります' :
-            methodName + 'の引数' + i + 'に不正な値が設定されました';
-        throw new TypeError(msg);
+        if (!type) {
+          return false;
+        }
+        if (v === null || v === void 0 ||
+            typeof v === 'string' && type === String ||
+            typeof v === 'number' && type === Number ||
+            typeof v === 'boolean' && type === Boolean ||
+            v instanceof type) {
+        } else {
+          return false;
+        }
       }
+      result = m.method.apply(self, values);
+      return true;
+    });
+
+    if (!run) {
+      var msg = methodName + 'は引数が不正のため実行できません';
+      throw new TypeError(msg);
     }
-    // メソッドの実行
-    return md.apply(this, p);
+    return result;
   };
+
+  method.methods = def;
+
+  return method;
+};
+
+/**
+ * 型変換を行うDate
+ */
+cocotteDefine.Date = {
+  type: Date,
+  exchange: [{
+    from: String,
+    to: function (val) {
+      var d = new Date(val);
+      return Number.isNaN(d.getTime()) ? val : d;
+    }
+  }]
 };
 
 module.exports = exports = cocotteDefine;

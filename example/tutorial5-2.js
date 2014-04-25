@@ -36,3 +36,10 @@ var k = new Klass();
 k.birthday = '1990-2-11';
 console.log(k.birthday);
 
+/** 
+ * #################  ノート  #################
+ * Date型の入力値は、StringからDateに自動的に変換を行ってくれる設定の
+ * 定義オブジェクトが予め備わっています。
+ * 下記の設定は、上記の設定と同じです
+ */
+// Klass.setProperty('birthday', def.Date);

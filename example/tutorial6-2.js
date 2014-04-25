@@ -3,13 +3,11 @@
 var def = require('cocotte-define');
 
 /**
- * Serrt (getter/setter)
+ * prototypeプロパティ (getter/setter)
  *
- * Getter/Setterを手動で設定します
- * tutorial2と似ていますが、プライベート変数を設定・取得する事ができません
- * prototypeに設定されるためメモリ効率はよくなります。
- *
- * getterのみ指定すると読取専用、setterのみ指定すると書込専用になります
+ * setterの入力値の型を確認します
+ * typeを追加してください
+ * 
  */
 
 // ------------- クラス定義

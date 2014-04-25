@@ -9,7 +9,6 @@ def(Klass);
 Klass.properties.name = {type: String};
 var k = new Klass();
 
-
 assert.throws(function (){
   k.name = 123;
 });

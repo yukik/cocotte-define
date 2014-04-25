@@ -5,20 +5,23 @@ cocotte-define
 
 # はじめに
 
-javascriptでクラスを定義することを簡単かつ安全に行うためのヘルパーです。
+javascriptでクラスを定義することを簡単かつ安全に行うためのヘルパーです。  
 プライベート変数と継承の同時に実装すると煩雑になりやすいですが、
 ヘルパー関数を使用する事で簡単に実装出来、保守しやすくなります。
 
-#機能
+# 主な機能
 
- + 簡易の型チェック
- + Getter/Setterの設定
- + メソッドの引数の型チェック
- + プライベート変数
- + 継承
+ + プライベート変数のサポート
+ + プロパティの簡易の型確認
+ + プロパティのGetter/Setterの設定
  + プロパティのすべての値の一括取得
- + prototypeへの設定
+ + メソッドの引数の型確認
+ + メソッドのオーバーロード
  + 入力値の変換
+ + 継承
+ + prototypeへの設定
+
+
 
 #使用方法
 
@@ -65,7 +68,8 @@ def(Klass);
 ## プロパティの簡易な型指定
 
 Klassのpropertiesに定義します。  
-`{type: 型}`を設定することで、自動的に型チェックを行います
+`{type: 型}`を設定することで、自動的に型確認を行います。  
+値がnull/undefinedの場合は型確認を行いません
 
 ```javascript
 var Klass = function Klass() {
@@ -82,7 +86,7 @@ k.name = 'foo';
 
 `exchange`を設定します。  
 `from`に対象の型を指定し、`to`に変換するための関数を設定します  
-変換後の値も同様に`type`との型チェックされます。  
+変換後の値も同様に`type`との型確認されます。  
 また、typeと同じ型のtoを設定した場合も１回だけ変換されます  
 変換後の値が再度ほかの型で変換される事はありません。  
 
@@ -146,8 +150,8 @@ Klass.properties.name = function (pv) {
   return {
     setter: function (val) {
       pv.name = val;
-    }
-    ,getter: function () {
+    },
+    getter: function () {
       return pv.name;
     }
   };
@@ -157,9 +161,11 @@ var k = new Klass();
 k.name = 'foo';
 ```
 
-## 型を指定したGetter/Setter
+## Setterの前に入力値の型を確認する
 
-設定時の`type`を指定します。
+`type`を指定します。  
+`Setter`が実施される前に、型が一致しているかを確認します  
+値がunll/undefinedの場合は型確認をおこないません。
 
 ```javascript
 var Klass = function Klass() {
@@ -169,11 +175,43 @@ def(Klass);
 Klass.properties.name = function (pv) {
   return {
     type: String,
-    getter: function () {
-      return pv.name;
-    },
     setter: function (val) {
       pv.name = val;
+    },
+    getter: function () {
+      return pv.name;
+    }
+  };
+};
+
+var k = new Klass();
+k.name = 'foo';
+```
+
+## Setterの前に入力値を変換する
+
+`exchange`を設定します。  
+設定方法は「簡易な型指定」と同じです
+
+```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.properties.birthday = function (pv) {
+  return {
+    exchange: {
+      from: String,
+      to: function (val) {
+        return new Date(val);
+      }
+    },
+    type: Date,
+    setter: function (val) {
+      pv.birthday = val;
+    },
+    getter: function () {
+      return pv.birthday;
     }
   };
 };
@@ -207,7 +245,7 @@ k.setName('foo');
 オブジェクトを戻す関数を定義します。  
 そのオブジェクトにparamsとmethodを設定してください
 
-paramsによりmethodを実行する前に引数のチェックが行われます。
+paramsによりmethodを実行する前に引数の型確認が行われます。
 
  + paramsの数以上の引数が渡されていないか？
  + 引数がnull,undefined以外の時に型が一致しているか？
@@ -229,6 +267,40 @@ Klass.methods.setName = function (pv) {
 var k = new Klass();
 k.setName('foo');
 ```
+
+## メソッドのオーバーロード
+
+引数の型を確認する場合は、オーバーロードを設定する事が出来ます。  
+定義オブジェクトの配列を設定してください。  
+引数の型に一致したメソッドが呼び出されます。  
+null/undefinedはすべての型と一致すると判断されます。
+
+```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.methods.setName = function (pv) {
+  return [
+    {
+      params: [String],
+      method: function (val) {
+        pv.name = val;
+      }
+    },
+    {
+      params: [Number],
+      method: function (val) {
+        this.setName('A' + val);
+      }
+    }
+  ];
+};
+
+var k = new Klass();
+k.setName(123);
+```
+
 
 ## 継承
 
@@ -283,7 +355,7 @@ console.log(k.value);
 
 ## プロパティの簡易な型指定 (prototype)
 
-`setProperty`を使用する事で、自動的に型チェックを行うGetter/Setterを定義します  
+`setProperty`を使用する事で、自動的に型確認を行うGetter/Setterを定義します  
 実際に設定された値は、プロパティに`_`を追加した名称で登録され外部からも参照可能です。
 
 ```
@@ -352,4 +424,31 @@ Klass.prototype.setName = function (val) {
   this.name= val;
 };
 ```
+
+## メソッドのオーバーロード (prototype)
+
+同じメソッド名で`setMethod`を定義します。  
+定義された順に引数の確認が行われ、一致したメソッドが実行されます
+
+```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.setMethod('setName', {
+  params: [String],
+  method: function (val) {
+    this.name = val;
+  }
+});
+Klass.setMethod('setName', {
+  params: [Number],
+  method: function (val) {
+    this.setName('A' + val);
+  }
+});
+var k = new Klass();
+k.setName(123);
+```
+
 

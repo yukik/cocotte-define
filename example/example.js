@@ -7,7 +7,7 @@ var Klass = function Klass() {
 };
 def(Klass);
 Klass.properties.name = {type: String};
-Klass.properties.birthday = {type: Date};
+Klass.properties.birthday = def.Date;
 Klass.properties.age = function (pv) {
   return {
     getter: function () {

@@ -2,6 +2,7 @@
 var def = require('../define');
 var assert = require('assert');
 
+// 単数のexchange
 var Klass = function Klass() {
   this.def(Klass);
 };
@@ -29,7 +30,12 @@ assert(null === k.name);
 k.name = void 0;
 assert(null === k.name);
 
+assert.throws(function() {
+  k.name = true;
+});
 
+
+// 複数のexchange
 var Klass2 = function Klass2() {
   this.def(Klass2);
 };
@@ -70,4 +76,7 @@ assert(null === k2.name);
 k2.name = void 0;
 assert(null === k2.name);
 
+assert.throws(function() {
+  k.name = true;
+});
 
