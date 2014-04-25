@@ -11,8 +11,11 @@ var def = require('cocotte-define');
  * prototypeに設定されるためメモリ効率はよくなります。
  *
  * 引数または型確認が不要の場合は、通常の方法でprototypeに追加してください
- *   Klass.prototype.meth1 = function (val) {this.prop1= val;};
+ * その方が無駄がありません。
  * 
+ *   Klass.prototype.meth1 = function (val) {
+ *     this.prop1= val;
+ *   };
  */
 
 // ------------- クラス定義

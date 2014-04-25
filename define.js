@@ -35,24 +35,36 @@ var setProperty = function setProperty(name, config) {
     throw new TypeError('引数エラー');
   }
 
-  if ('type' in config === ('setter' in config || 'getter' in config)) {
-    throw new TypeError('typeとsetter/getterを同時に設定する事はできません');
+  var type = config.type; // 入力値の型
+  var exchange = config.exchange; // 型変換
+  var setter = config.setter;
+  var getter = config.getter;
+  var readonly = !setter && !!getter;
+  var writeonly = !!setter && !getter;
+
+  if (!type && !(setter || getter)) {
+    throw new TypeError('typeとsetter/getterのどちらか設定してください');
   }
 
-  if ('type' in config) {
-    Object.defineProperty (this.prototype, name, {
-      enumerable: true,
-      set: setterForPrototype(name, config.type),
-      get: getterForPrototype(name)
-    });
-
-  } else {
-    Object.defineProperty (this.prototype, name, {
-      enumerable: true,
-      set: config.setter || setError,
-      get: config.getter || getError
-    });
+  if (readonly && (exchange || type)) {
+    throw new Error('読取専用のプロパティにexchangeやtypeは設定できません');
   }
+
+  if (!setter) {
+    setter = readonly ? setError : true;
+  }
+
+  setter = buildSetter(name, setter, type, exchange);
+
+  if (!getter) {
+    getter = writeonly ? getError : getterForPrototype(name);
+  }
+
+  Object.defineProperty (this.prototype, name, {
+    enumerable: true,
+    set: setter,
+    get: getter
+  });
 };
 
 var setMethod = function setMethod (name, config) {
@@ -61,7 +73,6 @@ var setMethod = function setMethod (name, config) {
   }
   this.prototype[name] = methodArgCheck(name, config);
 };
-
 
 /**
  * 初期化メソッド
@@ -157,9 +168,10 @@ var defineProperties = function defineProperties(instance, properties) {
       if (!n.setter && !n.getter) {
         throw new Error('setterもしくはgetterのいずれかを設定してください');
       }
+
       Object.defineProperty (instance, p, {
         enumerable: true,
-        set: n.setter || setError,
+        set: buildSetter(p, n.setter, n.type, n.exchange, pv),
         get: n.getter || getError
       });
       if (n.getter) {
@@ -172,9 +184,14 @@ var defineProperties = function defineProperties(instance, properties) {
       if (!type) {
         throw new Error('型の指定が存在しません');
       }
+
+      if (def.getter || def.setter) {
+        throw new Error('propertiesにオブジェクトを設定する場合は、getter/setterを設定できません。setPropertyを使用してください');
+      }
+
       Object.defineProperty (instance, p, {
         enumerable: true,
-        set: setterWithPrivate(p, type, pv),
+        set: buildSetter(p, true, def.type, def.exchange, pv),
         get: getterWithPrivate(p, pv)
       });
       gettable.push(p);
@@ -185,59 +202,65 @@ var defineProperties = function defineProperties(instance, properties) {
   });
 };
 
+var buildSetter = function buildSetter(propName, setter, type, exchange, pv) {
 
+  // セッター無し
+  if (!setter) {
+    return setError;
+  }
 
-var setterForPrototype = function setterForPrototype(propName, type) {
-  return function setter (val) {
-    var name = propName + '_';
-    if (val === null || val === void 0) {
-      this[name] = null;
+  // 型チェック無し
+  if (!type && !exchange) {
+    return setter;
+  }
 
-    } else if (typeof val === 'string' && type === String) {
-      this[name] = val;
+  exchange = !exchange || Array.isArray(exchange) ? exchange : [exchange];
 
-    } else if (typeof val === 'number' && type === Number) {
-      this[name] = val;
+  /**
+   * 型チェック有り
+   */
+  return function (val) {
 
-    } else if (typeof val === 'boolean' && type === Boolean) {
-      this[name] = val;
-
-    } else if (val instanceof type) {
-      this[name] = val;
-
-    } else {
-      var typeName = type.name;
-      var msg = typeName ? propName + 'は' + typeName + 'である必要があります' :
-            propName + 'に不正な値が設定されました';
-      throw new TypeError(msg);
+    if (val === void 0) {
+      val = null;
     }
-  };
-};
 
-/**
- * プライベート変数あり汎用セッタ
- * @method setterWithPrivate
- * @param  {String} propName
- * @param  {Object} def
- * @param  {Object} pv
- */
-var setterWithPrivate = function setterWithPrivate (propName, type, pv) {
-  return function setter (val) {
-    if (val === null || val === void 0) {
-      pv[propName] = null;
+    if (val !== null && exchange) {
 
-    } else if (typeof val === 'string' && type === String) {
-      pv[propName] = val;
+      exchange.some(function (p) {
+        var tp = p.from;
+        if (tp === String && typeof val === 'string' ||
+            tp === Number && typeof val === 'number' ||
+            tp === Boolean && typeof val === 'boolean' ||
+            val instanceof tp) {
 
-    } else if (typeof val === 'number' && type === Number) {
-      pv[propName] = val;
+          val = p.to(val);
+          return true;
 
-    } else if (typeof val === 'boolean' && type === Boolean) {
-      pv[propName] = val;
+        } else {
+          return false;
+        }
+      });
+    }
 
-    } else if (val instanceof type) {
-      pv[propName] = val;
+    if (val === null ||
+        !type ||
+        type === String && typeof val === 'string' ||
+        type === Number && typeof val === 'number' ||
+        type === Boolean && typeof val === 'boolean' ||
+        val instanceof type) {
 
+      if (setter === true) {
+        if (pv) {
+          pv[propName] = val;
+        } else {
+          this[propName + '_'] = val;
+        }
+
+      } else {
+        setter.call(this, val);
+
+      }
     } else {
       var typeName = type.name;
       var msg = typeName ? propName + 'は' + typeName + 'である必要があります' :
@@ -276,14 +299,14 @@ var getterWithPrivate = function getterWithPrivate (propName, pv) {
 /**
  * 読取専用プロパティ用setter
  */
-var setError = function setterError() {
+var setError = function setError() {
   throw new Error('値を設定する事ができません');
 };
 
 /**
  * 書込専用プロパティ用getter
  */
-var getError = function setterError() {
+var getError = function getError() {
   throw new Error('値を取得する事ができません');
 };
 

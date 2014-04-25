@@ -16,23 +16,20 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.properties.name = function (pv) {
+Klass.properties.birthday = function (pv) {
   return {
-    getter: function () {
-      return pv.name;
+    exchange: {from: String, to:function(val) { return new Date(val);}},
+    type: Date,
+    setter: function (val) {
+      pv.birthday = val;
     },
-    setter: function (value) {
-      pv.name = value;
+    getter: function () {
+      return pv.birthday;
     }
   };
 };
 
 // ------------- ユーザーコード
-
 var k = new Klass();
-
-// 値の設定
-k.name = 'bar';
-
-// プロパティの取得
-console.log(k.name);
+k.birthday = '1990-4-12';
+console.log(k.birthday);
