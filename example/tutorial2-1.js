@@ -21,8 +21,8 @@ Klass.properties.name = function (pv) {
     getter: function () {
       return pv.name;
     },
-    setter: function (value) {
-      pv.name = value;
+    setter: function (val) {
+      pv.name = val;
     }
   };
 };

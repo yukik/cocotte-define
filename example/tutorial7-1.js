@@ -3,16 +3,22 @@
 var def = require('cocotte-define');
 
 /**
- * prototypeにメソッドを設定
+ * prototypeメソッド
+ * 
  * paramsに引数の型を指定します。
  * methodが実行される前に型確認をし、合わない場合は例外が発生します
+ *
+ * ただし、null/undefinedは型確認をパスします
  * 
  * tutorial4と似ていますが、プライベート変数を設定・取得する事ができません
  * prototypeに設定されるためメモリ効率はよくなります。
  *
  * 引数または型確認が不要の場合は、通常の方法でprototypeに追加してください
- *   Klass.prototype.meth1 = function (val) {this.prop1= val;};
+ * その方が無駄がありません。
  * 
+ *   Klass.prototype.meth1 = function (val) {
+ *     this.prop1= val;
+ *   };
  */
 
 // ------------- クラス定義

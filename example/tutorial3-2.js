@@ -6,7 +6,6 @@
  * paramsに引数の型を列挙し、methodに関数を指定します
  * 実行時に型が合わない場合は例外が発生します
  */
-
 var def = require('cocotte-define');
 
 // ------------- クラス定義
@@ -14,6 +13,7 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
+Klass.properties.name = {type: String};
 Klass.methods.setName = function (pv) {
   return {
     params: [String],
@@ -24,12 +24,7 @@ Klass.methods.setName = function (pv) {
 };
 
 // ------------- ユーザーコード
-
 var k = new Klass();
-
-// メソッドの実行
 k.setName('foo');
-
-// k.setName(123); // 例外
-
+// k.setName(123); 例外
 console.log(k.value);

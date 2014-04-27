@@ -10,7 +10,6 @@
  * また、クラスに自動的にvalueのプロパティが追加されており
  * 取得するとすべての設定されたプロパティの値を持つオブジェクトが返されます
  */
-
 var def = require('../define');
 
 // ------------- クラス定義
@@ -20,20 +19,12 @@ var Klass = function Klass() {
 };
 def(Klass);
 Klass.properties.name = {type: String};
-Klass.properties.age = {type: Number};
 
 // ------------- ユーザーコード
 var k = new Klass();
-
-// 値の設定
 k.name = 'foo';
-
 // k.name = 123; // 例外発生
-
-// プロパティの取得
 console.log(k.name);
-
-// プロパティの全ての値の取得
 console.log(k.value);
 
 

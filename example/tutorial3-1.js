@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * メソッドの定義ではプロベート変数を一つだけ引数に取る高階関数を定義します
+ * メソッドの定義ではプライベート変数を一つだけ引数に取る高階関数を定義します
  */
 
 var def = require('cocotte-define');
@@ -21,6 +21,7 @@ Klass.methods.getName = function (pv) {
     return pv.name;
   };
 };
+
 
 // ------------- ユーザーコード
 var k = new Klass();

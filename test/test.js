@@ -1,81 +1,44 @@
 'use strict';
-var def = require('../define');
-var assert = require('assert');
 
-var Klass = function Klass (str1, num1) {
-  this.def(Klass);
-  this.str1 = str1;
-  this.num1 = num1;
-};
-def(Klass);
-Klass.properties.str1 = {type: String};
-Klass.properties.str2 = function (pv) {
-  return {
-    getter: function () {
-      return pv.str2 || null;
-    },
-    setter: function (val) {
-      if (val === null || val === void 0 || typeof val === 'string') {
-        pv.str2 = val;
-      } else {
-        throw new TypeError('引数が文字列ではありません');
-      }
-    }
-  };
-};
-Klass.properties.num1 = {type: Number};
-Klass.properties.num2 = function (pv) {
-  return {
-    getter: function () {
-      return pv.num2;
-    },
-    setter: function (val) {
-      if (1 <= val && val <= 100) {
-        pv.num2 = val;
-      } else {
-        throw new TypeError('1から100までの数字を設定してください');
-      }
-    }
-  };
-};
-Klass.methods.m1 = function (pv) {
-  return function (val) {
-    this.num1 = pv.num1 ? pv.num1 + val : val;
-  };
-};
-Klass.methods.m2 = function (pv) {
-  return {
-    params: [Number],
-    method: function (val) {
-      this.num2 = pv.num2 ? pv.num2 + val : val;
-    }
-  };
-};
+// type property
+require('./1-1-instance-property');
+require('./1-2-array');
+require('./1-3-exchange');
+require('./1-4-def-date');
+require('./1-5-property-define-error');
 
-var k = new Klass('foo', 10);
+// getter setter
+require('./2-1-getter-setter');
+require('./2-2-type');
+require('./2-3-exchange');
+require('./2-4-type-exchange');
+require('./2-5-property-define-error');
 
-// --- test
+// method
+require('./3-1-method');
+require('./3-2-params');
+require('./3-3-overload');
+require('./3-4-method-define-error');
 
-assert(k.str1 === 'foo');
+// inherits
+require('./4-1-inherits');
+require('./4-2-with-prototype');
 
-k.str1 = 'bar';
+// prototype property
+require('./5-1-prototype-property');
+require('./5-2-exchange');
+require('./5-3-property-define-error');
 
-assert(k.str1 === 'bar');
+// prototype getter setter
+require('./6-1-getter-setter');
+require('./6-2-type');
+require('./6-3-exchange');
+require('./6-4-property-define-error');
 
-assert.throws(function(){
-  k.str1 = 123;
-}, TypeError);
+// prototype method
+require('./7-1-prototype-method');
+require('./7-2-overload');
+require('./7-3-method-define-error');
 
-assert(k.str2 === null);
 
-k.str2 = 'piyo';
-
-assert(k.str2 === 'piyo');
-
-assert.throws(function(){
-  k.str2 = 123;
-}, TypeError);
-
-// TODO 続きは後日
-
-console.log('test success');
+console.log('test ok');
