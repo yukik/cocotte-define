@@ -15,13 +15,13 @@ Klass.properties.age = function (pv) {
     }
   };
 };
-Klass.properties.nameLength = function(pv){
-  return {
-    getter: function() {
-      return pv.name.length;
-    }
-  };
-};
+
+Klass.setProperty('nameLength', {
+  getter: function () {
+    return this.name.length;
+  }
+});
+
 Klass.methods.getAge = function (pv) {
   return {
     params: [Date],
@@ -44,4 +44,7 @@ k.name = 'foo';
 k.birthday = new Date('1980-3-22');
 
 console.log(k.getAge(new Date('2000-2-14')));
+
+console.log('name-lenght: ' + k.nameLength);
+
 console.log(k.value);

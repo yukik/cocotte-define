@@ -13,6 +13,8 @@ assert.throws(function (){
   k.name = 123;
 });
 
+assert(null === k.name);
+
 k.name = 'foo';
 assert('foo' === k.name);
 

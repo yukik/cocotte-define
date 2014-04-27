@@ -22,7 +22,6 @@ javascriptでクラスを定義することを簡単かつ安全に行うため�
  + prototypeへの設定
 
 
-
 #使用方法
 
 1.定義関数をクラスに設定する
@@ -35,7 +34,7 @@ javascriptでクラスを定義することを簡単かつ安全に行うため�
 
 node.jsでは次のようにします
 
-```
+```javascript
 var def = require('cocotte-define');
 ```
 
@@ -82,6 +81,27 @@ var k = new Klass();
 k.name = 'foo';
 ```
 
+## 配列を型指定する
+
+型に配列を設定した場合は、更に要素の型を指定する事が出来ます。  
+`item`に要素の型を指定してください。  
+`null`を設定しても、取得時には空の配列が返されます。  
+また取得した配列の要素に変更を加えても、元のプロパティの値は変更されません。
+
+```javascript
+var Klass = function Klass() {
+  this.def(Klass);
+};
+def(Klass);
+Klass.properties.hobbies = {
+  type: Array,
+  item: String
+};
+
+var k = new Klass();
+k.hobbies = ['tennes', 'jogging'];
+```
+
 ## 入力値を変換して設定する
 
 `exchange`を設定します。  
@@ -95,7 +115,7 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.properties.name = {
+Klass.properties.birthday = {
   type: Date,
   exchange: {
     from: String,
@@ -106,7 +126,7 @@ Klass.properties.name = {
 };
 
 var k = new Klass();
-k.name = 'foo';
+k.birthday = '1990-3-20';
 ```
 
 変換を行いたい型が複数存在する場合は、`exchange`を配列にします。  
@@ -129,6 +149,10 @@ k.name = 'foo';
   }
   ]
 ```
+
+Date型は予めStringをDateに変換するexchangeを含んだものを用意しています。  
+`Klass.properties.birthday = def.Date;`と簡易に設定できます
+
 
 ## Getter/Setterを指定
 
@@ -217,7 +241,7 @@ Klass.properties.birthday = function (pv) {
 };
 
 var k = new Klass();
-k.name = 'foo';
+k.birthday = '1990-3-20';
 ```
 
 ## メソッドを指定
@@ -358,7 +382,7 @@ console.log(k.value);
 `setProperty`を使用する事で、自動的に型確認を行うGetter/Setterを定義します  
 実際に設定された値は、プロパティに`_`を追加した名称で登録され外部からも参照可能です。
 
-```
+```javascript
 var Klass = function Klass() {
   this.def(Klass);
 };
@@ -374,7 +398,7 @@ k.name = 'foo';
 getterを省略すると書込専用のプロパティになります。  
 setterを省略すると読取専用のプロパティになります。  
 
-値を格納する場合は、別のインスタンスのプロパティを参照する必要があります
+値を格納する場合は、プロパティ名とは別のプロパティを指定する必要があります
 
 ```javascript
 var Klass = function Klass() {
@@ -416,7 +440,7 @@ var k = new Klass();
 k.setName('foo');
 ```
 
-引数または型確認が不要の場合は、通常の方法でprototypeに追加してください。  
+引数または型確認が不要の場合は、下記の方法でprototypeに追加してください。  
 その方が無駄がありません。
 
 ```javascript

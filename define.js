@@ -1,3 +1,4 @@
+/*jshint maxparams:6*/
 'use strict';
 
 /**
@@ -36,33 +37,36 @@ var setProperty = function setProperty(name, config) {
   }
 
   var type = config.type; // 入力値の型
+  var itemType = config.item; // 配列時の要素の型
   var exchange = config.exchange; // 型変換
   var setter = config.setter;
   var getter = config.getter;
   var readonly = !setter && !!getter;
   var writeonly = !!setter && !getter;
 
-  if (!type && !(setter || getter)) {
+  if (!type && !setter && !getter) {
     throw new TypeError('typeとsetter/getterのどちらか設定してください');
+  }
+
+  if (type && typeof type !== 'function') {
+    throw new TypeError('typeが型ではありません');
   }
 
   if (readonly && (exchange || type)) {
     throw new Error('読取専用のプロパティにexchangeやtypeは設定できません');
   }
 
-  if (!setter) {
+  if (typeof setter !== 'function') {
     setter = readonly ? setError : true;
   }
 
-  setter = buildSetter(name, setter, type, exchange);
-
-  if (!getter) {
-    getter = writeonly ? getError : getterForPrototype(name);
+  if (typeof getter !== 'function') {
+    getter = writeonly ? getError : getterForPrototype(name, type);
   }
 
   Object.defineProperty (this.prototype, name, {
     enumerable: true,
-    set: setter,
+    set: buildSetter(name, setter, type, itemType, exchange),
     get: getter
   });
 };
@@ -167,7 +171,7 @@ var tempDel = function tempDel (instance) {
 };
 
 /**
- * プロパティ定義
+ * インスタンスプロパティ定義
  * @method defineProperties
  * @param  {Object} instance   インスタンス
  * @param  {Object} properties Getter/Setterを定義したプロパティ
@@ -189,23 +193,28 @@ var defineProperties = function defineProperties(instance, properties) {
       throw new Error(p + 'は既にメソッドとして定義されているため、プロパティに設定できません');
     }
 
+    if (!(p in pv)) {
+      pv[p] = null;
+    }
+
     if (typeof def === 'function') {
       // 対象が定義用の関数の場合はgetter,setterを個別に設定
       var n = def(pv);
-      if (!n.setter && !n.getter) {
+
+      if (!n || typeof n !== 'object' || !n.setter && !n.getter) {
         throw new Error('setterもしくはgetterのいずれかを設定してください');
       }
 
       Object.defineProperty (instance, p, {
         enumerable: true,
-        set: buildSetter(p, n.setter, n.type, n.exchange, pv),
+        set: buildSetter(p, n.setter, n.type, n.item, n.exchange, pv),
         get: n.getter || getError
       });
       if (n.getter) {
         gettable.push(p);
       }
 
-    } else if (typeof def === 'object') {
+    } else if (typeof def === 'object' && def !== null) {
       // オブジェクトの場合は型の指定と見なして汎用設定
       var type = def.type;
       if (!type) {
@@ -218,10 +227,13 @@ var defineProperties = function defineProperties(instance, properties) {
 
       Object.defineProperty (instance, p, {
         enumerable: true,
-        set: buildSetter(p, true, def.type, def.exchange, pv),
-        get: getterWithPrivate(p, pv)
+        set: buildSetter(p, true, def.type, def.item, def.exchange, pv),
+        get: getterWithPrivate(p, def.type, pv)
       });
       gettable.push(p);
+
+    } else {
+      throw new TypeError('プロパティ' + p + 'の定義が正しくありません');
     }
 
     instance.def_.properties.push(p);
@@ -229,7 +241,23 @@ var defineProperties = function defineProperties(instance, properties) {
   });
 };
 
-var buildSetter = function buildSetter(propName, setter, type, exchange, pv) {
+/**
+ * セッター作成
+ * プロトタイプ・インスタンス兼用
+ * @method buildSetter
+ * @param  {String}    propName
+ * @param  {Function}  setter
+ * @param  {Function}  type
+ * @param  {Function}  itemType
+ * @param  {Object}    exchange
+ * @param  {Object}    pv
+ * @return {Function}
+ */
+var buildSetter = function buildSetter(propName, setter, type, itemType, exchange, pv) {
+
+  if (itemType && (type !== Array || typeof itemType !== 'function')) {
+    throw new TypeError('プロパティ' + propName + 'のitemはtypeがArrayのみ指定可能で、型である必要があります');
+  }
 
   // セッター無し
   if (!setter) {
@@ -248,12 +276,15 @@ var buildSetter = function buildSetter(propName, setter, type, exchange, pv) {
    */
   return function (val) {
 
+    var typeName;
+    var msg;
+
     if (val === void 0) {
       val = null;
     }
 
+    // 変換
     if (val !== null && exchange) {
-
       exchange.some(function (p) {
         var tp = p.from;
         if (tp === String && typeof val === 'string' ||
@@ -270,6 +301,15 @@ var buildSetter = function buildSetter(propName, setter, type, exchange, pv) {
       });
     }
 
+    // 配列時の各要素の型確認
+    if (val !== null && type === Array && typeof itemType === 'function' && !isAll(itemType, val)) {
+      typeName = itemType.name;
+      msg = typeName ? propName + 'は要素が' + typeName + 'である配列である必要があります' :
+            propName + 'に不正な値が設定されました';
+      throw new TypeError(msg);
+    }
+
+    // 型確認
     if (val === null ||
         !type ||
         type === String && typeof val === 'string' ||
@@ -288,9 +328,10 @@ var buildSetter = function buildSetter(propName, setter, type, exchange, pv) {
         setter.call(this, val);
 
       }
+
     } else {
-      var typeName = type.name;
-      var msg = typeName ? propName + 'は' + typeName + 'である必要があります' :
+      typeName = type.name;
+      msg = typeName ? propName + 'は' + typeName + 'である必要があります' :
             propName + 'に不正な値が設定されました';
       throw new TypeError(msg);
     }
@@ -298,29 +339,68 @@ var buildSetter = function buildSetter(propName, setter, type, exchange, pv) {
 };
 
 /**
- * プロトタイプ用汎用ゲッタ
+ * 配列のすべての要素が指定する型であるかどうかを確認する
+ * @method isAll
+ * @param  {Function} type
+ * @param  {Array}    target
+ * @return {Boolean}
+ */
+var isAll = function isAll (type, target) {
+  if (Array.isArray(target)) {
+    return target.every(function (item) {
+      return type === String && typeof item === 'string' ||
+             type === Number && typeof item === 'number' ||
+             type === Boolean && typeof item === 'boolean' ||
+             item instanceof type;
+    });
+  } else {
+    return false;
+  }
+};
+
+/**
+ * プロトタイプ汎用ゲッタ 
  * @method getterForPrototype
  * @param  {String} propName
  * @return {Mixed}  値
  */
-var getterForPrototype = function getterForPrototype (propName) {
-  return function getter () {
-    var name = propName + '_';
-    return name in this ? this[name] : null;
-  };
+var getterForPrototype = function getterForPrototype (propName, type) {
+  if (type === Array) {
+    return function getter () {
+      var name = propName + '_';
+      return Array.isArray(this[name]) ? [].concat(this[name]) : [];
+    };
+
+  } else {
+    return function getter () {
+      var name = propName + '_';
+      return name in this ? this[name] : null;
+    };
+    
+  }
 };
 
 /**
- * プライベート変数あり汎用ゲッタ
+ * インスタンス汎用ゲッタ
  * @method getterWithPrivate
  * @param  {String} propName
+ * @param  {Function} type
  * @param  {Object} pv
  * @return {Mixed}  値
  */
-var getterWithPrivate = function getterWithPrivate (propName, pv) {
-  return function getter () {
-    return propName in pv ? pv[propName] : null;
-  };
+var getterWithPrivate = function getterWithPrivate (propName, type, pv) {
+
+  if (type === Array) {
+    return function getter () {
+      return Array.isArray(pv[propName]) ? [].concat(pv[propName]) : [];
+    };
+
+  } else {
+    return function getter () {
+      return propName in pv ? pv[propName] : null;
+    };
+
+  }
 };
 
 /**
@@ -449,6 +529,15 @@ var defineMethods = function defineMethods (instance, methods) {
  * @param  {Object} def
  */
 var methodArgCheck = function methodArgCheck (methodName, def) {
+
+  var e = def.some(function(d) {
+    return !d || typeof d !== 'object' ||
+      !Array.isArray(d.params) || typeof d.method !== 'function';
+  });
+
+  if (e) {
+    throw new Error('paramsとmethodが正しく設定されていません');
+  }
 
   var method = function paramCheckMethod() {
     var self = this;
