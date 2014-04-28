@@ -80,3 +80,48 @@ var assert = require('assert');
   });
 
 })();
+
+// Array item
+(function() {
+
+  var Klass = function Klass() {
+    this.def(Klass);
+  };
+  def(Klass);
+  Klass.setProperty('prop1', {
+    exchange: {
+      from: Array,
+      item: String,
+      to: function (val) {
+        return val.join();
+      }
+    },
+    type: String,
+    setter: function (val) {
+      this.prop1_ = val;
+    },
+    getter: function () {
+      return this.prop1_;
+    }
+  });
+
+  var k = new Klass();
+
+  k.prop1 = 'foo';
+  assert(k.prop1 === 'foo');
+
+  k.prop1 = ['foo', 'bar', 'baz'];
+  assert(k.prop1 === 'foo,bar,baz');
+
+  k.prop1 = [];
+  assert(k.prop1 === '');
+
+  assert.throws(function(){
+    k.prop1 = [1, 2, 3];
+  });
+
+  assert.throws(function(){
+    k.prop1 = ['foo', 1];
+  });
+
+})();

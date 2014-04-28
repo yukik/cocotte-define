@@ -16,13 +16,21 @@ var Klass = function Klass() {
 };
 def(Klass);
 Klass.properties.birthday = {
-  exchange: {from: String, to: function (val) {
-    return new Date(val);
-  }},
+  exchange: {
+    from: String,
+    to: function (val) {
+      return new Date(val);
+    }
+  },
   // 上記と同じ
-  // exchange: [{from: String, to: function (val) {
-  //   return new Date(val);
-  // }}],
+  // exchange: [
+  //   {
+  //     from: String,
+  //     to: function (val) {
+  //       return new Date(val);
+  //     }
+  //   }
+  // ],
   type: Date
 };
 
