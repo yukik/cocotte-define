@@ -1,7 +1,7 @@
 'use strict';
-
 /**
- * exchangeを予め定義されたDate型のプロパティを設定できます
+ * 変換時に、配列の型の時のみ、要素の型を指定する事ができます
+ * exchangeにitemを指定してください
  */
 var def = require('../define');
 
@@ -10,12 +10,22 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.properties.birthday = def.Date;
+Klass.properties.serial = {
+  exchange: {
+    from: Array,
+    item: Number,
+    to: function (val) {
+      return val.join('-');
+    }
+  },
+  type: String
+};
 
 // ------------- ユーザーコード
 var k = new Klass();
-k.birthday = '1990-11-9';
-console.log(k.birthday);
+k.serial = [123, 4567, 890];
+console.log(k.serial);
+
 
 
 

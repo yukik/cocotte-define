@@ -1,7 +1,10 @@
 'use strict';
 
 /**
- * オーバーロードに対応するには配列を設定します
+ * 引数確認に配列を含ませ、さらに要素の型を確認したい場合は次のようにします
+ *
+ *
+ * paramsの型を[]で括ります
  */
 
 var def = require('cocotte-define');
@@ -11,25 +14,17 @@ var Klass = function Klass() {
   this.def(Klass);
 };
 def(Klass);
-Klass.properties.name = {type: String};
-Klass.methods.setName = function (pv) {
-  return [
-    {
-      params: [String],
+Klass.properties.hobbies = {type: Array};
+Klass.methods.setHobbies = function (pv) {
+  return {
+      params: [[String]],
       method: function (val) {
-        pv.name = val;
+        pv.hobbies = val;
       }
-    },
-    {
-      params: [Number],
-      method: function (val) {
-        this.setName('A' + val);
-      }
-    }
-  ];
+    };
 };
 
 // ------------- ユーザーコード
 var k = new Klass();
-k.setName(123);
+k.setHobbies(['jogging', 'tennes']);
 console.log(k.value);

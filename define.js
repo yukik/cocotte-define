@@ -289,9 +289,19 @@ var buildSetter = function buildSetter(propName, setter, type, itemType, exchang
         var tp = p.from;
         if (tp === String && typeof val === 'string' ||
             tp === Number && typeof val === 'number' ||
-            tp === Boolean && typeof val === 'boolean' ||
-            val instanceof tp) {
+            tp === Boolean && typeof val === 'boolean') {
+          val = p.to(val);
+          return true;
 
+        } else if (tp === Array && Array.isArray(val) && p.item) {
+          if (isAll(p.item, val)) {
+            val = p.to(val);
+            return true;
+          } else {
+            return false;
+          }
+
+        } else if (val instanceof tp) {
           val = p.to(val);
           return true;
 
@@ -563,8 +573,15 @@ var methodArgCheck = function methodArgCheck (methodName, def) {
         if (v === null || v === void 0 ||
             typeof v === 'string' && type === String ||
             typeof v === 'number' && type === Number ||
-            typeof v === 'boolean' && type === Boolean ||
-            v instanceof type) {
+            typeof v === 'boolean' && type === Boolean) {
+
+        } else if (Array.isArray(type)) {
+          if (!isAll(type[0], v)) {
+            return false;
+          }
+
+        } else if(v instanceof type) {
+
         } else {
           return false;
         }

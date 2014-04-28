@@ -4,8 +4,9 @@
 require('./1-1-instance-property');
 require('./1-2-array');
 require('./1-3-exchange');
-require('./1-4-def-date');
-require('./1-5-property-define-error');
+require('./1-4-exchange-array');
+require('./1-5-def-date');
+require('./1-6-property-define-error');
 
 // getter setter
 require('./2-1-getter-setter');

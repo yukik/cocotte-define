@@ -129,6 +129,20 @@ var k = new Klass();
 k.birthday = '1990-3-20';
 ```
 
+`from`が`Array`の時には、さらに`item`を指定する事で各要素の型を指定することができます。  
+以下の例では、入力値が`['foo', 'bar', 'baz']`の際には設定されますが、  
+`[1, 2, 3]`の場合は例外が発生します。
+
+```
+exchange: {
+  from: Array,
+  item: String,
+  to: function (val) {
+    return val.join('-');
+  }
+}
+```
+
 変換を行いたい型が複数存在する場合は、`exchange`を配列にします。  
 最初に一致した型が１回だけ適用されます。  
 複数の変換が同時に行われる事はありません。
@@ -292,6 +306,21 @@ var k = new Klass();
 k.setName('foo');
 ```
 
+引数の一つの型が配列の場合は、各要素の型も指定出来ます。  
+その際は、`Array`のかわりに`[Date]`などを指定してください。  
+下記の例では、第2引数は日付型の配列でなければいけません。
+
+```
+Klass.methods.setHolidays = function (pv) {
+  return {
+    params: [String, [Date]],
+    method: function (name, Holidays) {
+      pv.holidays[name] = holidays;
+    }
+  };
+};
+```
+
 ## メソッドのオーバーロード
 
 引数の型を確認する場合は、オーバーロードを設定する事が出来ます。  
@@ -440,6 +469,17 @@ var k = new Klass();
 k.setName('foo');
 ```
 
+配列の要素の型を指定する場合は次の用に行います。  
+
+```
+Klass.setMethod('setHolidays', {
+  params: [String, [Date]],
+  method: function (name, holidays) {
+    this.holidays[name] = holidays;
+  }
+});
+```
+
 引数または型確認が不要の場合は、下記の方法でprototypeに追加してください。  
 その方が無駄がありません。
 
@@ -474,5 +514,26 @@ Klass.setMethod('setName', {
 var k = new Klass();
 k.setName(123);
 ```
+
+
+# 最後に
+
+クラス定義の際に、プロパティとメソッドをインスタンスとprototypeのどちらに
+設定する方がよいのか迷った場合、  
+次のようにすることをオススメします。  
+
+プロパティは、インスタンス。`Klass.properties`に設定する。  
+メソッドは、prototype。`Klass.setMethod`を呼び出し、設定する。  
+
+プロパティは実際の値を格納する為にどうしても、値の保護を優先する必要があります。  
+そのため、プライベート変数を利用するほうが安全になります。  
+
+メソッドから直接プライベート変数を呼び出す事は稀で、
+プロパティ経由で値を取得・設定を行う事で処理も簡略化できます。  
+メモリを効率化するためにも有効です。  
+
+ただし上記のルールは、場面により不適切な場合もあるため、適宜判断する必要があります。
+
+
 
 
