@@ -25,7 +25,7 @@ if(!window.Cocotte) {
     F.prototype = sup.prototype;
     sub.prototype = new F();
     sub.prototype.constructor = sub;
-    sub.prototype.super_ = sup;
+    sub.super_ = sup;
   };
 
   /**
