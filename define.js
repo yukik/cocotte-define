@@ -1,4 +1,10 @@
 /*jshint maxparams:6*/
+
+/*
+ * Copyright(c) 2014 Yuki Kurata <yuki.kurata@gmail.com>
+ * MIT Licensed
+ */
+
 'use strict';
 
 /**
